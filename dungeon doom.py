@@ -339,7 +339,8 @@ class Tile(object):
      self.currentimagename=imagename      
      self.x=x
      self.y=y
-
+     self.OverlayImage=None
+     
      self.ChangeTileImage(imagename)
       
     #
@@ -377,6 +378,9 @@ class Tile(object):
         if self.previousimagename != None:
             self.image.config(file=self.previousimagename)      # change image
 
+        if self.OverlayImage != None:           
+            Tile.copy_image(self.OverlayImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,self.image)
+            
     def SetAttributes(self,attribs):
         self.attributes=attribs
         
@@ -875,15 +879,10 @@ class Game(object):
            if Game.check_if_moveable(x,y) == -1:            # check if moveabke
                return
 
-           print("MOVE 0")
-           
-           # check if moving through NPC      
-          # for n in Game.npcs: 
-          #     if(n.CheckMoveableNPC(x,y) == -1):
-          #        return
-
-           print("MOVE 1")
-           
+           for n in Game.npcs:
+               if n.x == x and n.y == y:
+                   return -1
+                
            source_targetxy=int(Game.player_y*((Game.w/Tile.TILE_Y_SIZE)))+Game.player_x
            dest_targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
 
@@ -902,14 +901,10 @@ class Game(object):
            else:
                Tile.copy_image(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,self.blockimages[dest_targetxy].image)
 
-           print("MOVE 2")
-
            self.blockimages[source_targetxy].RestoreTileImage()                                 # restore tile
 
            Game.player_x=x
            Game.player_y=y           
-
-           print("MOVE 3")
 
            Game.do_block(x,y)                                 # do block
 
@@ -1068,7 +1063,9 @@ class Game(object):
                         # remove object from world
 
                         self.blockimages[targetxy].ChangeTileImage("tiles/background.gif")     # set  image
-                        self.blockimages[targetxy].img=self.blockimages[targetxy].image                        
+                        self.blockimages[targetxy].img=self.blockimages[targetxy].image
+                        self.blockimages[targetxy].OverlayImage=None
+                        
                         return
 
     def drop_object(self,event=None):
@@ -1587,10 +1584,10 @@ class Game(object):
     
                         if ((Game.blockimages[targetxy].currentimagename == tile[Game.BLK_FILENAME]) and (tile[Game.BLK_FLAGS] & Game.BLOCK_OVERLAYABLE)) or Game.blockimages[targetxy].currentimagename == "tiles/slabs.gif":
 
-                            self.tempimage=PhotoImage(file=tilefilename)        # load image
-                            self.tempimage.img=self.tempimage
+                            Game.blockimages[targetxy].OverlayImage=PhotoImage(file=tilefilename)        # load image
+                            Game.blockimages[targetxy].OverlayImage.img=Game.blockimages[targetxy].OverlayImage
                     
-                            Tile.copy_image(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
+                            Tile.copy_image(Game.blockimages[targetxy].OverlayImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
                             Game.blockimages[targetxy].currentimagename=tilefilename
                 
                             count += 1
