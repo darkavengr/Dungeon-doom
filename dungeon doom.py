@@ -377,7 +377,8 @@ class Tile(object):
 
         if self.previousimagename != None:
             self.image.config(file=self.previousimagename)      # change image
-
+            self.currentimagename=self.previousimagename
+            
         if self.OverlayImage != None:           
             Tile.copy_image(self.OverlayImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,self.image)
             
@@ -814,16 +815,22 @@ class Game(object):
 
                       #print("found=",tile)
                       object_type_list[Game.BLK_FUNCTION]()                 # call function
-   
+
+        # remove object from world
+        
         for object_type_list in Game.item_tiles:           
             if object_type_list[Game.BLK_FILENAME] == Game.blockimages[targetxy].currentimagename:         # if block matches
-  
+
+              print("found item")
+            
               object_type_list[Game.BLK_FUNCTION]()                 # call function
 
-              if (object_type_list[Game.BLK_FLAGS] & Game.BLOCK_GENERATED):                       
-                     # remove object from world
-                      Game.blockimages[targetxy].RestoreTileImage() 
-                                              
+              if (object_type_list[Game.BLK_FLAGS] & Game.BLOCK_GENERATED):
+                      Game.blockimages[targetxy].OverlayImage=None
+                      Game.blockimages[targetxy].RestoreTileImage()
+                      
+                      return
+                    
               return
         
     # 
@@ -877,10 +884,10 @@ class Game(object):
 
     def player_move(self,x,y):
            if Game.check_if_moveable(x,y) == -1:            # check if moveabke
-               return
+               return -1
 
            for n in Game.npcs:
-               if n.x == x and n.y == y:
+               if n.CheckMoveableNPC(x,y) == -1:
                    return -1
                 
            source_targetxy=int(Game.player_y*((Game.w/Tile.TILE_Y_SIZE)))+Game.player_x
@@ -2417,6 +2424,9 @@ class NPC:
              
              for x_list in y_list:                
                 targetxy=int(myy*((Game.w/Tile.TILE_Y_SIZE)))+myx
+
+                #print(myx,myy,targetxy)
+                
                 Game.blockimages[targetxy].RestoreTileImage()
                 
                 myx += 1
