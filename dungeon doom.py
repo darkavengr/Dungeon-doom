@@ -660,7 +660,7 @@ class Game(object):
     
     item_tiles = [
                         ["tiles/healthpotion.gif",lambda: Game.do_health_potion(),BLOCK_TRAVERSABLE | BLOCK_PICKUPABLE | BLOCK_GENERATED,2,0,0,2],\
-		  	["tiles/heart.gif",lambda: Game.do_heart(),BLOCK_TRAVERSABLE+BLOCK_PICKUPABLE  | BLOCK_GENERATED ,1,0,0,1],\
+		  	["tiles/extralifepotion.gif",lambda: Game.do_extra_life_potion(),BLOCK_TRAVERSABLE | BLOCK_PICKUPABLE | BLOCK_GENERATED,1,0,0,1],\
 		  	
     ]
 
@@ -747,7 +747,7 @@ class Game(object):
 
         Player.AdjustHealthLevel(1)
                 
-    def do_heart():       
+    def do_extra_life_potion():       
         soundpath=os.path.join(os.getcwd(),"sounds/extralife.wav")                                          
         Sound.PlaySound(soundpath)                      # play sound
 
@@ -913,6 +913,8 @@ class Game(object):
            Game.player_x=x
            Game.player_y=y           
 
+           print(x,y)
+           
            Game.do_block(x,y)                                 # do block
 
     #
