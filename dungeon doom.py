@@ -747,7 +747,9 @@ class Game(object):
 
         Player.AdjustHealthLevel(1)
                 
-    def do_extra_life_potion():       
+    def do_extra_life_potion():
+        print("extra life")
+        
         soundpath=os.path.join(os.getcwd(),"sounds/extralife.wav")                                          
         Sound.PlaySound(soundpath)                      # play sound
 
@@ -837,7 +839,7 @@ class Game(object):
    # check if player can move
     #
     
-    def check_if_moveable(x,y):    
+    def check_if_moveable(x,y):        
         if x <= 0 or x >= int(Game.w/Tile.TILE_X_SIZE):          # check if x value is valid                       
            return -1
 
@@ -872,7 +874,7 @@ class Game(object):
 
         if (Game.npcs != None) and (Game.npcs != []):        # check if NPC is at coordinates
                     for n in Game.npcs:
-                        if Game.player_x == n.x and Game.player_y == n.y:
+                        if n.CheckMoveableNPC(Game.player_x,Game.player_y) == -1:
                             return -1
                         
         return 0
@@ -883,6 +885,8 @@ class Game(object):
     #
 
     def player_move(self,x,y):
+           print("check=",x,y)
+
            if Game.check_if_moveable(x,y) == -1:            # check if moveabke
                return -1
 
@@ -2270,14 +2274,14 @@ class NPC:
         self.DrawNPC_Sprite(self.npc_tiles,self.x,self.y)             # draw sprite
 
     def CheckMoveableNPC(self,x,y):
-        myx=x
-        myy=y
+        myx=self.x
+        myy=self.y
         
         for y_list in self.npc_tiles:
              savex=myx
              
              for x_list in y_list:                
-                if((myx == Game.player_x) and (myy == Game.player_y)):
+                if((myx == x) and (myy == y)):                
                    return -1
                 
                 myx += 1
@@ -2323,9 +2327,15 @@ class NPC:
             return
             
         # move otherwise
+
+        print("mooooooooooooooooooooove")
         
-        if Game.player_y < self.y:                            
+        if Game.player_y < self.y:
+                if (self.CheckMoveableNPC(Game.player_x,Game.player_y-1) == -1):
+                    return
+                
                 if (Game.check_if_moveable(self.x,self.y-1) == 0):
+                   
                     #print("NPC move north")
                     self.MoveNPC(self.WHICH_WAY_NORTH)
                     return
@@ -2340,7 +2350,10 @@ class NPC:
                 else:
                     self.MoveNPC(self.WHICH_WAY_SOUTH)
                     return
-        elif Game.player_y > self.y:                            
+        elif Game.player_y > self.y:
+                if (self.CheckMoveableNPC(Game.player_x,Game.player_y+1) == -1):
+                    return
+                
                 if (Game.check_if_moveable(self.x,self.y+1) == 0):
                     #print("NPC move south")
                     self.MoveNPC(self.WHICH_WAY_SOUTH)
@@ -2355,7 +2368,10 @@ class NPC:
                     self.MoveNPC(self.WHICH_WAY_SOUTH)
                     return
  
-        elif Game.player_x < self.x:                
+        elif Game.player_x < self.x:
+                if (self.CheckMoveableNPC(Game.player_x-1,Game.player_y) == -1):
+                    return
+                
                 if (Game.check_if_moveable(self.x-1,self.y) == 0):
                     #print("NPC move west")
                     self.MoveNPC(self.WHICH_WAY_WEST)
@@ -2370,7 +2386,10 @@ class NPC:
                     self.MoveNPC(self.WHICH_WAY_EAST)
                     return
         elif Game.player_x > self.x:
-                if (Game.check_if_moveable(self.x+1,self.y) == 0): 
+                if (self.CheckMoveableNPC(Game.player_x+1,Game.player_y-1) == -1):
+                    return
+                
+                if (Game.check_if_moveable(self.x+1,self.y) == 0):
                     #print("NPC move east")
                     self.MoveNPC(self.WHICH_WAY_EAST)
                     return
