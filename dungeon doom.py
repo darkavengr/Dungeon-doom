@@ -165,8 +165,7 @@ class Player(object):
                 Game.GameOver(Game)
             else:
                 Player.die()            
-        else:
-         print("hit")
+        else:         
          tilepath=os.path.join(os.getcwd(),p[Player.PLAYER_ENTRY_DAMAGED_SPRITE])
          Player.ApplyEffect(Game.player_x,Game.player_y,Player.PLAYER_RESTORE_TIME,tilepath)
          HUD.UpdateHUD()
@@ -216,20 +215,17 @@ class Player(object):
             Tile.copy_image(Player.saveimage,Tile.TILE_X_SIZE-1,Tile.TILE_Y_SIZE-1,Player.PlayerImage)
 
 # restore background        
-        if Player.which_way_facing == Player.FACING_NORTH:                           # moving north
-            print("Restore north");            
+        if Player.which_way_facing == Player.FACING_NORTH:                           # moving north            
             Tile.copy_image(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)           
             
-        elif Player.which_way_facing == Player.FACING_WEST:                          # moving west
-            print("Restore west");
+        elif Player.which_way_facing == Player.FACING_WEST:                          # moving west            
             Tile.rotate_anticlockwise_90degrees(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
             
-        elif Player.which_way_facing == Player.FACING_SOUTH:
-            print("Restore south");
+        elif Player.which_way_facing == Player.FACING_SOUTH:            
             Tile.flip_image_y(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
             
         elif Player.which_way_facing == Player.FACING_EAST:
-            print("Restore east");
+            
             Tile.rotate_clockwise_90degrees(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
 
         Player.ApplyingEffect=False              # Clear flag for applying effect
@@ -840,10 +836,10 @@ class Game(object):
     #
     
     def check_if_moveable(x,y):        
-        if x <= 0 or x >= int(Game.w/Tile.TILE_X_SIZE):          # check if x value is valid                       
+        if x < 0 or x >= int(Game.w/Tile.TILE_X_SIZE):          # check if x value is valid                       
            return -1
 
-        if y <= 0 or y >= int(Game.h/Tile.TILE_Y_SIZE)-Game.MenuBarHeight:          # check if y value is valid
+        if y < 0 or y >= int(Game.h/Tile.TILE_Y_SIZE)-Game.MenuBarHeight:          # check if y value is valid
            return -1
 
         if (x == Game.player_x) and (y == Game.player_y):            
@@ -1618,8 +1614,8 @@ class Game(object):
         Game.player_start_x=startx
         Game.player_start_y=starty
         
-        x=2
-        y=1
+        x=0
+        y=0
 
         stagetiles=Game.stage_tiles[Game.CurrentStage-1]          # point to tiles for stage
         
@@ -2327,8 +2323,6 @@ class NPC:
             return
             
         # move otherwise
-
-        print("mooooooooooooooooooooove")
         
         if Game.player_y < self.y:
                 if (self.CheckMoveableNPC(Game.player_x,Game.player_y-1) == -1):
