@@ -2477,8 +2477,11 @@ class NPC:
                  
      elif self.which_way_facing == self.FACING_SOUTH:
         ypos=0
-        
-        for y_list in sprite:
+
+        ss=copy.deepcopy(sprite)
+        ss.reverse()
+
+        for y_list in ss:
             savex=x
             
             for x_list in y_list:
@@ -2486,7 +2489,7 @@ class NPC:
                 targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
                                
                 self.tempimage=PhotoImage(file=x_list)                
-                Tile.flip_image_y(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
+                Tile.flip_image_y(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)                
                 x += 1
             
             x=savex 
