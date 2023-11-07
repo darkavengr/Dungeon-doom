@@ -1,4 +1,4 @@
-    
+        
 # Dungeon Doom
 #
 # Version 2.0
@@ -1097,11 +1097,11 @@ class Game(object):
                HUD.UpdateHUD()
                return
 
-    def selected_character(WHICH_WAYplayer):
+    def selected_character(player):
         soundpath=os.path.join(os.getcwd(),"sounds/character_select.wav")                                          
         Sound.PlaySound(soundpath)                      # play sound
 
-        Game.player_selected=WHICH_WAYplayer           # save player type number
+        Game.player_selected=player           # save player type number
 
         # destroy buttons
         
@@ -1162,8 +1162,8 @@ class Game(object):
 
             Game.rootwindow.config(menu=self.menubar)    # add the menu bar
             
-            self.max_y_blocks=self.h/Tile.TILE_Y_SIZE
-            self.max_x_blocks=Game.w/Tile.TILE_X_SIZE
+            self.max_y_blocks=(self.h/Tile.TILE_Y_SIZE)
+            self.max_x_blocks=(Game.w/Tile.TILE_X_SIZE)
               
             # create canvas that covers the whole window
             Game.canvas = Canvas(Game.rootwindow,width = Game.rootwindow.winfo_screenwidth(), height = Game.rootwindow.winfo_screenheight())
@@ -2057,10 +2057,10 @@ class NPC:
     FACING_EAST  = 2
     FACING_WEST  = 3
 
-    WHICH_WAY_NORTH=1
-    WHICH_WAY_SOUTH=2
-    WHICH_WAY_EAST=4
-    WHICH_WAY_WEST=8
+    WHICH_WAY_NORTH=0
+    WHICH_WAY_SOUTH=1
+    WHICH_WAY_EAST=2
+    WHICH_WAY_WEST=3
 
 
 # list entries
@@ -2231,7 +2231,8 @@ class NPC:
     #
     def __init__(self,npc):        
         self.which_way_facing=0
-
+        self.which_way_moving=0
+        
         while 1:
             # Get location of NPC
 
@@ -2287,6 +2288,7 @@ class NPC:
              myy += 1
                    
         return 0
+
     #
     # Move NPC towards player
     #
@@ -2318,110 +2320,54 @@ class NPC:
                          
                    self.DrawNPC_Sprite(self.attack_tiles,self.x,self.y)              # draw sprite
     
-                   Player.hit(self.attack_damage*self.evil/Player.level)
-
-            return
+                   Player.hit(self.attack_damage*self.evil/Player.level)                  
             
         # move otherwise
-        
         if Game.player_y < self.y:
-                if (self.CheckMoveableNPC(Game.player_x,Game.player_y-1) == -1):
-                    return
-                
-                if (Game.check_if_moveable(self.x,self.y-1) == 0):
-                   
-                    #print("NPC move north")
-                    self.MoveNPC(self.WHICH_WAY_NORTH)
-                    return
-                elif (Game.check_if_moveable(self.x-1,self.y) == 0):
-                    #print("NPC move north")
-                    self.MoveNPC(self.WHICH_WAY_EAST)
-                    return
-                elif (Game.check_if_moveable(self.x+1,self.y) == 0):
-                    #print("NPC move north")
+                if Game.check_if_moveable(self.x,self.y-1) == 0:               
+                    self.MoveNPC(self.WHICH_WAY_NORTH)                    
+        else:
+                if Game.check_if_moveable(self.x,self.y+1) == 0:
+                    self.MoveNPC(self.WHICH_WAY_SOUTH)
+                 
+        if Game.player_x < self.x:
+                if self.CheckMoveableNPC(Game.player_x-1,Game.player_y) == 0:
                     self.MoveNPC(self.WHICH_WAY_WEST)
-                    return
-                else:
-                    self.MoveNPC(self.WHICH_WAY_SOUTH)
-                    return
-        elif Game.player_y > self.y:
-                if (self.CheckMoveableNPC(Game.player_x,Game.player_y+1) == -1):
-                    return
-                
-                if (Game.check_if_moveable(self.x,self.y+1) == 0):
-                    #print("NPC move south")
-                    self.MoveNPC(self.WHICH_WAY_SOUTH)
-                    return
-                elif (Game.check_if_moveable(self.x-1,self.y) == 0):
-                    self.MoveNPC(self.WHICH_WAY_EAST)
-                    return
-                elif (Game.check_if_moveable(self.x+1,self.y) == 0):
-                    self.MoveNPC(self.WHICH_WAY_WEST)
-                    return
-                else:
-                    self.MoveNPC(self.WHICH_WAY_SOUTH)
-                    return
- 
-        elif Game.player_x < self.x:
-                if (self.CheckMoveableNPC(Game.player_x-1,Game.player_y) == -1):
-                    return
-                
-                if (Game.check_if_moveable(self.x-1,self.y) == 0):
-                    #print("NPC move west")
-                    self.MoveNPC(self.WHICH_WAY_WEST)
-                    return
-                elif (Game.check_if_moveable(self.x,self.y-1) == 0):
-                    self.MoveNPC(self.WHICH_WAY_SOUTH)
-                    return
-                elif (Game.check_if_moveable(self.x,self.y+1) == 0):
-                    self.MoveNPC(self.WHICH_WAY_NORTH)
-                    return
-                else:
-                    self.MoveNPC(self.WHICH_WAY_EAST)
-                    return
-        elif Game.player_x > self.x:
-                if (self.CheckMoveableNPC(Game.player_x+1,Game.player_y-1) == -1):
-                    return
-                
+                    return         
+        else:
                 if (Game.check_if_moveable(self.x+1,self.y) == 0):
-                    #print("NPC move east")
                     self.MoveNPC(self.WHICH_WAY_EAST)
                     return
-                elif (Game.check_if_moveable(self.x,self.y-1) == 0):
-                    self.MoveNPC(self.WHICH_WAY_SOUTH)
-                    return
-                elif (Game.check_if_moveable(self.x,self.y+1) == 0):
-                    self.MoveNPC(self.WHICH_WAY_NORTH)
-                    return
-                else:
-                    self.MoveNPC(self.WHICH_WAY_WEST)
-                    return
+    
     #
     # Move NPC
     #
-    def MoveNPC(self,which_way):        
+    def MoveNPC(self,which_way):
+        ways = [ "","North","South","East","West" ]
+        
         self.restore_sprite_background(self.npc_tiles,self.x,self.y)
 
         if which_way == self.WHICH_WAY_NORTH:
 
             if self.y > 1:               
                  self.y -= 1
-                 self.which_way_facing=self.FACING_NORTH
-            
+                 self.which_way_facing=self.FACING_NORTH               
         elif which_way == self.WHICH_WAY_SOUTH:
             if self.y < (Game.h-1):                
                  self.y += 1
-                 self.which_way_facing=self.FACING_SOUTH
-            
+                 self.which_way_facing=self.FACING_SOUTH                 
+
+                 print("Move south=",self.x,self.y)
+                 
         elif which_way == self.WHICH_WAY_EAST:
             if self.x < (Game.w/Tile.TILE_X_SIZE)-1:
                  self.x += 1
                  self.which_way_facing=self.FACING_EAST
-             
+            
         elif which_way == self.WHICH_WAY_WEST:
             if self.x > 0:              
                  self.x -= 1
-                 self.which_way_facing=self.FACING_WEST
+                 self.which_way_facing=self.FACING_WEST                
 
         self.restore_sprite_background(self.npc_tiles,self.x,self.y)
         self.DrawNPC_Sprite(self.npc_tiles,self.x,self.y)              # draw sprite     
