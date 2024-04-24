@@ -653,6 +653,9 @@ class Game(object):
     STAGE_FOREGROUND_TILES = 0
     STAGE_BACKGROUND_TILES = 1
     STAGE_BACKGROUND = 2
+
+    WORLD_ORDINARY = 1
+    WORLD_BOSS_FIGHT = 2
     
     item_tiles = [
                         ["tiles/healthpotion.gif",lambda: Game.do_health_potion(),BLOCK_TRAVERSABLE | BLOCK_PICKUPABLE | BLOCK_GENERATED,2,0,0,2],\
@@ -937,9 +940,9 @@ class Game(object):
                 # if boss fight, generate boss fight
                 # generate level otherwise
                 if Game.CurrentAreaInStage == Game.MaxAreasInStage-1:
-                    self.generatebossfight()
+                    self.generateworld(Game.WORLD_BOSS_FIGHT,Game.player_x,Game.player_y)
                 else:                    
-                    self.generateworld(Game.player_x,Game.player_y)
+                    self.generateworld(Game.WORLD_ORDINARY,Game.player_x,Game.player_y)
 
                 Game.player_x=0
                 Player.RestorePlayer()              # draw player sprite
@@ -1053,7 +1056,7 @@ class Game(object):
         #
 
  
-     foregroundtiles=Game.stagetiles[Game.STAGE_FOREGROUND_TILES]
+     foregroundtiles=Game.stage_tiles[Game.STAGE_FOREGROUND_TILES]
         
      targetxy=int(self.player_y*((Game.w/Tile.TILE_Y_SIZE)))+self.player_x
         
@@ -1242,7 +1245,7 @@ class Game(object):
         Game.player_x=2
         Game.player_y=2
         
-        self.generateworld(Game.player_x,Game.player_y)               
+        self.generateworld(Game.WORLD_ORDINARY,Game.player_x,Game.player_y)               
                 
         playertype=Player.player_types[Game.player_selected]
         tile=playertype[Player.PLAYER_ENTRY_SPRITE]
@@ -1572,7 +1575,7 @@ class Game(object):
         background=stagetiles[Game.STAGE_BACKGROUND]
 
         count=Game.min_items
-        
+        	
         while count < Game.max_items/len(Game.item_tiles):
             itemcount=0
 
@@ -1603,17 +1606,8 @@ class Game(object):
                             
                 itemcount += 1
             
-            
-    #
-    # Generate world
-    #
-    def generateworld(self,startx,starty):        
-        generatable_items=[]
-        Game.blockimages=[]
-        Game.npcs=[]
-        Game.player_start_x=startx
-        Game.player_start_y=starty
-        
+
+    def generateforeground(self):
         x=0
         y=0
 
@@ -1622,25 +1616,6 @@ class Game(object):
         foregroundtiles=stagetiles[Game.STAGE_FOREGROUND_TILES]
         backgroundtiles=stagetiles[Game.STAGE_BACKGROUND_TILES]
         background=stagetiles[Game.STAGE_BACKGROUND]
-        
-# fill tile list
-        
-        while y < Game.h:
-          while x < Game.w:
-            
-            Game.blockimages += [Tile(background,x,y)]
-            		            
-            x += Tile.TILE_X_SIZE
-            
-          y += Tile.TILE_Y_SIZE
-          x=0
-    
-        Game.generatepaths(startx,starty)                       # generate paths
-
-       # generate background
-
-        x=0
-        y=0
         
         while y < int(Game.h/Tile.TILE_Y_SIZE)-1:
           x=0
@@ -1680,6 +1655,22 @@ class Game(object):
                 x += 1                 
                 y += 1
 
+
+    def generatebackground(self):
+        x=0
+        y=0
+
+        stagetiles=Game.stage_tiles[Game.CurrentStage-1]          # point to tiles for stage
+        
+        foregroundtiles=stagetiles[Game.STAGE_FOREGROUND_TILES]
+        backgroundtiles=stagetiles[Game.STAGE_BACKGROUND_TILES]
+        background=stagetiles[Game.STAGE_BACKGROUND]
+        
+    # generate background
+
+        x=0
+        y=0
+                
         
         while y < int(Game.h/Tile.TILE_Y_SIZE):    
           while x < int(Game.w/Tile.TILE_X_SIZE):
@@ -1794,37 +1785,25 @@ class Game(object):
                                                        
         Game.number_of_items=self.generateitems()
 
-        # generate NPCs
-        
-        if (len(Game.npcs) < Game.min_npcs) and (Game.npcs != None):   
-                    Game.number_of_npcs=(2^Game.CurrentStage)+1
-
-                    Game.npcs=[]
-                    
-                    for n in range(0,Game.number_of_npcs):
-                        npc_type=NPC.npc_types[random.randint(0,len(NPC.npc_types)-1)]
-                        Game.npcs += [NPC(npc_type)]
-                         
-        # play music
-        
-        if Midi.MusicPossible == True:
-            Midi.PlayRandomMidi()
-
     #
-    # Generate boss battle
+    # Generate world
     #
-    def generatebossfight(self):
-        stagetiles=Game.stage_tiles[Game.CurrentStage-1]          # point to tiles for stage
-        background=stagetiles[Game.STAGE_BACKGROUND]
-        
+    def generateworld(self,worldtype,startx,starty):        
+        generatable_items=[]
         Game.blockimages=[]
-
-        Game.player_start_x=0
-        Game.player_start_y=1
+        Game.npcs=[]
+        Game.player_start_x=startx
+        Game.player_start_y=starty
         
         x=0
         y=0
-                
+
+        stagetiles=Game.stage_tiles[Game.CurrentStage-1]          # point to tiles for stage
+        
+        foregroundtiles=stagetiles[Game.STAGE_FOREGROUND_TILES]
+        backgroundtiles=stagetiles[Game.STAGE_BACKGROUND_TILES]
+        background=stagetiles[Game.STAGE_BACKGROUND]
+    
 # fill tile list
         
         while y < Game.h:
@@ -1836,18 +1815,39 @@ class Game(object):
             
           y += Tile.TILE_Y_SIZE
           x=0
+    
+        Game.generatepaths(startx,starty)                       # generate paths
+        
+        #
+        # If it's an ordinary world, generate the backround and foreground
+        
+        if worldtype == Game.WORLD_ORDINARY:
+            Game.generateforeground(self)               # generate foreground
+            Game.generatebackground(self)               # generate background
+       
+        # generate NPCs
+        
+        if (len(Game.npcs) < Game.min_npcs) and (Game.npcs != None):   
+                    Game.number_of_npcs=(2^Game.CurrentStage)+1
 
-        
-        # generate boss NPC
-        npc_type=NPC.boss_npc_types[7]#Game.CurrentStage]       
-        Game.npcs=[NPC(npc_type)]
-        
+                    Game.npcs=[]
+                    
+                    for n in range(0,Game.number_of_npcs):
+                        npc_type=NPC.npc_types[random.randint(0,len(NPC.npc_types)-1)]
+                        Game.npcs += [NPC(npc_type)]
+
+         # generate boss NPC
+         
+        if worldtype == Game.WORLD_BOSS_FIGHT:
+            npc_type=NPC.boss_npc_types[Game.CurrentStage]       
+            Game.npcs += [NPC(npc_type)]
+             
         # play music
         
         if Midi.MusicPossible == True:
-            Midi.StartMidiPlay(Midi.bossmidifile)
+            Midi.PlayRandomMidi()
 
-        HUD.UpdateHUD()
+ 
 #
 # Heads-up display
 class HUD:
@@ -2289,9 +2289,6 @@ class NPC:
                    
         return 0
 
-    #
-    # Move NPC towards player
-    #
     def MoveNPC_Toward_Player(self):       
         
         if time.perf_counter() < self.tick_count:
@@ -2320,35 +2317,94 @@ class NPC:
                          
                    self.DrawNPC_Sprite(self.attack_tiles,self.x,self.y)              # draw sprite
     
-                   Player.hit(self.attack_damage*self.evil/Player.level)                  
+                   Player.hit(self.attack_damage*self.evil/Player.level)
+
+            return
             
         # move otherwise
+        
         if Game.player_y < self.y:
-                if Game.check_if_moveable(self.x,self.y-1) == 0:               
-                    self.MoveNPC(self.WHICH_WAY_NORTH)                    
-        else:
-                if Game.check_if_moveable(self.x,self.y+1) == 0:
-                    self.MoveNPC(self.WHICH_WAY_SOUTH)
-                 
-        if Game.player_x < self.x:
-                if self.CheckMoveableNPC(Game.player_x-1,Game.player_y) == 0:
-                    self.MoveNPC(self.WHICH_WAY_WEST)
-                    return         
-        else:
-                if (Game.check_if_moveable(self.x+1,self.y) == 0):
+                if (self.CheckMoveableNPC(Game.player_x,Game.player_y-1) == -1):
+                    return
+                
+                if (Game.check_if_moveable(self.x,self.y-1) == 0):
+                   
+                    #print("NPC move north")
+                    self.MoveNPC(self.WHICH_WAY_NORTH)
+                    return
+                elif (Game.check_if_moveable(self.x-1,self.y) == 0):
+                    #print("NPC move north")
                     self.MoveNPC(self.WHICH_WAY_EAST)
                     return
-    
-    #
+                elif (Game.check_if_moveable(self.x+1,self.y) == 0):
+                    #print("NPC move north")
+                    self.MoveNPC(self.WHICH_WAY_WEST)
+                    return
+                else:
+                    self.MoveNPC(self.WHICH_WAY_SOUTH)
+                    return
+        elif Game.player_y > self.y:
+                if (self.CheckMoveableNPC(Game.player_x,Game.player_y+1) == -1):
+                    return
+                
+                if (Game.check_if_moveable(self.x,self.y+1) == 0):
+                    #print("NPC move south")
+                    self.MoveNPC(self.WHICH_WAY_SOUTH)
+                    return
+                elif (Game.check_if_moveable(self.x-1,self.y) == 0):
+                    self.MoveNPC(self.WHICH_WAY_EAST)
+                    return
+                elif (Game.check_if_moveable(self.x+1,self.y) == 0):
+                    self.MoveNPC(self.WHICH_WAY_WEST)
+                    return
+                else:
+                    self.MoveNPC(self.WHICH_WAY_SOUTH)
+                    return
+ 
+        elif Game.player_x < self.x:
+                if (self.CheckMoveableNPC(Game.player_x-1,Game.player_y) == -1):
+                    return
+                
+                if (Game.check_if_moveable(self.x-1,self.y) == 0):
+                    #print("NPC move west")
+                    self.MoveNPC(self.WHICH_WAY_WEST)
+                    return
+                elif (Game.check_if_moveable(self.x,self.y-1) == 0):
+                    self.MoveNPC(self.WHICH_WAY_SOUTH)
+                    return
+                elif (Game.check_if_moveable(self.x,self.y+1) == 0):
+                    self.MoveNPC(self.WHICH_WAY_NORTH)
+                    return
+                else:
+                    self.MoveNPC(self.WHICH_WAY_EAST)
+                    return
+        elif Game.player_x > self.x:
+                if (self.CheckMoveableNPC(Game.player_x+1,Game.player_y-1) == -1):
+                    return
+                
+                if (Game.check_if_moveable(self.x+1,self.y) == 0):
+                    #print("NPC move east")
+                    self.MoveNPC(self.WHICH_WAY_EAST)
+                    return
+                elif (Game.check_if_moveable(self.x,self.y-1) == 0):
+                    self.MoveNPC(self.WHICH_WAY_SOUTH)
+                    return
+                elif (Game.check_if_moveable(self.x,self.y+1) == 0):
+                    self.MoveNPC(self.WHICH_WAY_NORTH)
+                    return
+                else:
+                    self.MoveNPC(self.WHICH_WAY_WEST)
+                    return
+        
     # Move NPC
     #
     def MoveNPC(self,which_way):
         ways = [ "","North","South","East","West" ]
-        
+
+        print("Move "+ways[which_way]+"=",self.x,self.y)
         self.restore_sprite_background(self.npc_tiles,self.x,self.y)
-
+        
         if which_way == self.WHICH_WAY_NORTH:
-
             if self.y > 1:               
                  self.y -= 1
                  self.which_way_facing=self.FACING_NORTH               
@@ -2356,8 +2412,7 @@ class NPC:
             if self.y < (Game.h-1):                
                  self.y += 1
                  self.which_way_facing=self.FACING_SOUTH                 
-
-                 print("Move south=",self.x,self.y)
+             
                  
         elif which_way == self.WHICH_WAY_EAST:
             if self.x < (Game.w/Tile.TILE_X_SIZE)-1:
@@ -2545,7 +2600,7 @@ class Midi:
         for count in range(0,Midi.midichunksize):
                 message=next(Midi.midi_iter)            # get next midi
                 
-                #print(message)
+                print(message)
                 Midi.output.send(message)        
 
         return(0)
