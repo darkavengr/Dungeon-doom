@@ -1279,8 +1279,7 @@ class Game(object):
      #
      # main event loop
      #
-        Game.npcs=[]
-      
+        
         while 1:        
             if Game.InGame == True:
           #     if Midi.MusicEnabled == True and Midi.File != None:
