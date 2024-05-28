@@ -58,6 +58,10 @@ class Player(object):
     level=1
     PLAYER_RESTORE_TIME=500   
     ApplyingEffect=False
+    player_x=0
+    player_y=0
+    player_start_x=2
+    player_start_y=1
     
     FACING_NORTH = 0  # Constants for facing north,south,east or west
     FACING_SOUTH = 1
@@ -69,26 +73,22 @@ class Player(object):
     # Entries in player types
     
     PLAYER_ENTRY_NAME     = 0
-    PLAYER_ENTRY_MAGIC    = 1
-    PLAYER_ENTRY_STRENGTH = 2
-    PLAYER_ENTRY_AGILITY  = 3
-    PLAYER_ENTRY_DEXTERITY = 4    
-    PLAYER_ENTRY_LUCK     = 5
-    PLAYER_ENTRY_WISDOM   = 6
-    PLAYER_ENTRY_INTELLIGENCE = 7
-    PLAYER_ENTRY_STAMINA  = 8
-    PLAYER_ENTRY_SPRITE    = 9
-    PLAYER_ENTRY_DAMAGED_SPRITE = 10
-    PLAYER_ENTRY_DEAD_SPRITE = 11
-    PLAYER_ENTRY_ATTACK = 12
-    PLAYER_ENTRY_GRAPHIC = 13
+    PLAYER_ENTRY_STRENGTH = 1
+    PLAYER_ENTRY_AGILITY  = 2
+    PLAYER_ENTRY_LUCK     = 3
+    PLAYER_ENTRY_STAMINA  = 4
+    PLAYER_ENTRY_SPRITE    = 5
+    PLAYER_ENTRY_DAMAGED_SPRITE = 6
+    PLAYER_ENTRY_DEAD_SPRITE = 7
+    PLAYER_ENTRY_ATTACK = 8
+    PLAYER_ENTRY_GRAPHIC = 9
     
-    #                   Name       Magic Strength  Agility  Dexterity Luck Wisdom  Intelligence, Stamina  Player sprite tile               Damaged sprite tile                 Dead sprite tile                  Player attack tile                  Character graphic
-    player_types = [ [ "barbarian",0,    0.90,     0.80,    0.70,     0.10,0.10,   0.60,          1000,    "tiles/barbarian-sprite.gif", "tiles/damaged-barbarian-sprite.gif","tiles/dead-barbarian-sprite.gif","tiles/barbarian-sprite-attack.gif","graphics/barbarian.gif" ],\
-                     [ "elf",      1000, 0.10,     0.90,    0.90,     0.20,0.90,   0.90,          500,     "tiles/elf-sprite.gif",       "tiles/damaged-elf-sprite.gif",      "tiles/dead-elf-sprite.gif",      "tiles/elf-sprite-attack.gif",      "graphics/elf.gif"   ],\
-                     [ "dwarf",    100,  0.20,     0.20,    0.20,     0.10,0.20,   0.50,          400,     "tiles/dwarf-sprite.gif",     "tiles/damaged-dwarf-sprite.gif",    "tiles/dead-elf-sprite.gif",      "tiles/dwarf-sprite-attack.gif",    "graphics/dwarf.gif" ],\
-                     [ "cleric",   0,    0.10,     0.40,    0.40,     0.20,0.80,   0.80,          200,     "tiles/cleric-sprite.gif",    "tiles/damaged-cleric-sprite.gif",   "tiles/dead-elf-sprite.gif",      "tiles/cleric-sprite-attack.gif",   "graphics/cleric.gif" ],\
-                     [ "paladin",  100,  0.10,     0.50,    0.50,     0.20,0.30,   0.60,          500,     "tiles/paladin-sprite.gif",   "tiles/damaged-paladin-sprite.gif",  "tiles/dead-paladin-sprite.gif",  "tiles/paladin-sprite-attack.gif",  "graphics/paladin.gif" ],\
+    #                   Name       Strength  Agility  Luck      Stamina   Player sprite tile             Damaged sprite tile                  Dead sprite tile                  Player attack tile                  Character graphic
+    player_types = [ [ "barbarian",0.90,    0.70,     0.10,     0.10,     "tiles/barbarian-sprite.gif", "tiles/damaged-barbarian-sprite.gif","tiles/dead-barbarian-sprite.gif","tiles/barbarian-sprite-attack.gif","graphics/barbarian.gif" ],\
+                     [ "elf",      0.40,    0.20,     0.20,     0.90,     "tiles/elf-sprite.gif",       "tiles/damaged-elf-sprite.gif",      "tiles/dead-elf-sprite.gif",      "tiles/elf-sprite-attack.gif",      "graphics/elf.gif"   ],\
+                     [ "dwarf",    0.80,    0.20,     0.10,     0.20,     "tiles/dwarf-sprite.gif",     "tiles/damaged-dwarf-sprite.gif",    "tiles/dead-elf-sprite.gif",      "tiles/dwarf-sprite-attack.gif",    "graphics/dwarf.gif" ],\
+                     [ "cleric",   0.50,    0.10,     0.20,     0.40,     "tiles/cleric-sprite.gif",    "tiles/damaged-cleric-sprite.gif",   "tiles/dead-elf-sprite.gif",      "tiles/cleric-sprite-attack.gif",   "graphics/cleric.gif" ],\
+                     [ "paladin",  0.60,    0.10,     0.20,     0.50,     "tiles/paladin-sprite.gif",   "tiles/damaged-paladin-sprite.gif",  "tiles/dead-paladin-sprite.gif",  "tiles/paladin-sprite-attack.gif",  "graphics/paladin.gif" ],\
                    ]
   
     #
@@ -102,7 +102,7 @@ class Player(object):
         Player.inventory=[None] * Player.InventorySize
         
 # load default player image
-        p=self.player_types[Game.player_selected]        
+        p=self.player_types[Player.player_selected]        
         Player.PlayerImage=PhotoImage(file=p[self.PLAYER_ENTRY_SPRITE])
         Player.saveimage=None
         Player.savebackground=None
@@ -138,9 +138,9 @@ class Player(object):
             soundpath=os.path.join(os.getcwd(),"sounds/die.wav")            # player dies
             Sound.PlaySound(soundpath)                      # play sound
 
-            p=Player.player_types[Game.player_selected]
+            p=Player.player_types[Player.player_selected]
             tilepath=os.path.join(os.getcwd(),p[Player.PLAYER_ENTRY_DEAD_SPRITE])
-            Player.ApplyEffect(Game.player_x,Game.player_y,Player.PLAYER_RESTORE_TIME,tilepath)
+            Player.ApplyEffect(Player.player_x,Player.player_y,Player.PLAYER_RESTORE_TIME,tilepath)
             
             Player.HealthLevel=Player.DefaultHealthLevel
             HUD.UpdateHUD()
@@ -155,11 +155,11 @@ class Player(object):
 
         Player.HealthLevel -= NumberOfPointsToDeduct                # update health level
 
-        p=Player.player_types[Game.player_selected]
+        p=Player.player_types[Player.player_selected]
 
         if Player.HealthLevel <= 0:     # player is dead
             tilepath=os.path.join(os.getcwd(),p[Player.PLAYER_ENTRY_DEAD_SPRITE])
-            Player.ApplyEffect(Game.player_x,Game.player_y,Player.PLAYER_RESTORE_TIME,tilepath)
+            Player.ApplyEffect(Player.player_x,Player.player_y,Player.PLAYER_RESTORE_TIME,tilepath)
 
             if Player.NumberOfLives == 0:           # game over            
                 Game.GameOver(Game)
@@ -167,7 +167,7 @@ class Player(object):
                 Player.die()            
         else:         
          tilepath=os.path.join(os.getcwd(),p[Player.PLAYER_ENTRY_DAMAGED_SPRITE])
-         Player.ApplyEffect(Game.player_x,Game.player_y,Player.PLAYER_RESTORE_TIME,tilepath)
+         Player.ApplyEffect(Player.player_x,Player.player_y,Player.PLAYER_RESTORE_TIME,tilepath)
          HUD.UpdateHUD()
 
 #
@@ -206,7 +206,7 @@ class Player(object):
         if Game.InGame == False:
             return
         
-        targetxy=int(Game.player_y*((Game.w/Tile.TILE_Y_SIZE)))+Game.player_x
+        targetxy=int(Player.player_y*((Game.w/Tile.TILE_Y_SIZE)))+Player.player_x
         
         # restore background and player image
         if Player.savebackground != None and Player.PlayerImage != None and Player.saveimage != None:
@@ -258,16 +258,16 @@ class Player(object):
             soundpath=os.path.join(os.getcwd(),"sounds/sword.wav")
             Sound.PlaySound(soundpath)                      # play sound
     
-            p=Player.player_types[Game.player_selected]
+            p=Player.player_types[Player.player_selected]
             attackpercent=(p[Player.PLAYER_ENTRY_STRENGTH]+p[Player.PLAYER_ENTRY_AGILITY])*p[Player.PLAYER_ENTRY_LUCK]
             
             tilepath=os.path.join(os.getcwd(),p[Player.PLAYER_ENTRY_ATTACK]) 
-            Player.ApplyEffect(Game.player_x,Game.player_y,Player.PLAYER_RESTORE_TIME,tilepath)
+            Player.ApplyEffect(Player.player_x,Player.player_y,Player.PLAYER_RESTORE_TIME,tilepath)
 
-            targetxy=int(Game.player_y*((Game.w/Tile.TILE_Y_SIZE)+1))+Game.player_x
+            targetxy=int(Player.player_y*((Game.w/Tile.TILE_Y_SIZE)+1))+Player.player_x
             
 # attack all around
-            for blockxy in (Game.player_x,Game.player_y+1),(Game.player_x,Game.player_y-1),(Game.player_x-1,Game.player_y),(Game.player_x+1,Game.player_y):
+            for blockxy in (Player.player_x,Player.player_y+1),(Player.player_x,Player.player_y-1),(Player.player_x-1,Player.player_y),(Player.player_x+1,Player.player_y):
                 x=blockxy[0]
                 y=blockxy[1]
 
@@ -282,7 +282,7 @@ class Player(object):
                              Game.blockimages[targetxy]="="          # remove tile from database
                         
                              tilepath=os.path.join(os.getcwd(),"tiles/object-destroyed.gif")
-                             Player.ApplyEffect(Game.player_x,Game.player_y,Player.PLAYER_RESTORE_TIME,tilepath)           # show destroyed tile
+                             Player.ApplyEffect(Player.player_x,Player.player_y,Player.PLAYER_RESTORE_TIME,tilepath)           # show destroyed tile
                              return
     
                 # attacking npc
@@ -604,11 +604,7 @@ class Tile(object):
 # Game class
 #
 class Game(object):
-    rootwindow=None
-    player_x=0
-    player_y=0
-    player_start_x=2
-    player_start_y=1           
+    rootwindow=None       
     w=0
     h=0
     tilepos=0         
@@ -757,11 +753,11 @@ class Game(object):
             HUD.UpdateHUD()
     
     def do_spikepit():
-         source_targetxy=int(Game.player_y*((Game.w/Tile.TILE_Y_SIZE)))+Game.player_x   
+         source_targetxy=int(Player.player_y*((Game.w/Tile.TILE_Y_SIZE)))+Player.player_x   
          Game.blockimages[source_targetxy].RestoreTileImage()                                 # restore tile
 
-         Game.player_x=Game.player_start_x  
-         Game.player_y=Game.player_start_y         
+         Player.player_x=Player.player_start_x  
+         Player.player_y=Player.player_start_y         
          Player.die();
 
     def do_spikes():         
@@ -833,7 +829,7 @@ class Game(object):
         if y < 0 or y >= int(Game.h/Tile.TILE_Y_SIZE)-Game.MenuBarHeight:          # check if y value is valid
            return -1
 
-        if (x == Game.player_x) and (y == Game.player_y):            
+        if (x == Player.player_x) and (y == Player.player_y):            
             return -1
         
         targetxy=int(y*(int(Game.w/Tile.TILE_Y_SIZE)))+x
@@ -861,7 +857,7 @@ class Game(object):
 
         if (Game.npcs != None) and (Game.npcs != []):        # check if NPC is at coordinates
                     for n in Game.npcs:
-                        if n.CheckMoveableNPC(Game.player_x,Game.player_y) == -1:
+                        if n.CheckMoveableNPC(Player.player_x,Player.player_y) == -1:
                             return -1
                         
         return 0
@@ -881,28 +877,28 @@ class Game(object):
                if n.CheckMoveableNPC(x,y) == -1:
                    return -1
                 
-           source_targetxy=int(Game.player_y*((Game.w/Tile.TILE_Y_SIZE)))+Game.player_x
+           source_targetxy=int(Player.player_y*((Game.w/Tile.TILE_Y_SIZE)))+Player.player_x
            dest_targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
 
            # change tile depending on which way the player is facing
     
            # rotate or copy image
         
-           if x > Game.player_x:                                                 # moving east               
+           if x > Player.player_x:                                                 # moving east               
                Tile.rotate_clockwise_90degrees(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,self.blockimages[dest_targetxy].image)        
-           elif x < Game.player_x:                                                 # moving west:               
+           elif x < Player.player_x:                                                 # moving west:               
                Tile.rotate_anticlockwise_90degrees(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,self.blockimages[dest_targetxy].image)
-           elif y > Game.player_y:                                                 # moving south               
+           elif y > Player.player_y:                                                 # moving south               
                Tile.flip_image_y(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,self.blockimages[dest_targetxy].image)
-           elif y < Game.player_y:            
+           elif y < Player.player_y:            
                Tile.copy_image(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,self.blockimages[dest_targetxy].image)
            else:
                Tile.copy_image(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,self.blockimages[dest_targetxy].image)
 
            self.blockimages[source_targetxy].RestoreTileImage()                                 # restore tile
 
-           Game.player_x=x
-           Game.player_y=y           
+           Player.player_x=x
+           Player.player_y=y           
 
            print(x,y)
            
@@ -922,21 +918,21 @@ class Game(object):
               
         Player.which_way_facing=Player.FACING_EAST        # change which way the player is facing
 
-        if Game.player_x+1 >= (Game.w/Tile.TILE_X_SIZE):                  # at edge of world
+        if Player.player_x+1 >= (Game.w/Tile.TILE_X_SIZE):                  # at edge of world
             if Game.move_forward_locked == False:
 
                 # if boss fight, generate boss fight
                 # generate level otherwise
                 if Game.CurrentAreaInStage == Game.MaxAreasInStage-1:
-                    self.generateworld(Game.WORLD_BOSS_FIGHT,Game.player_x,Game.player_y)
+                    self.generateworld(Game.WORLD_BOSS_FIGHT,Player.player_x,Player.player_y)
                 else:                    
-                    self.generateworld(Game.WORLD_ORDINARY,Game.player_x,Game.player_y)
+                    self.generateworld(Game.WORLD_ORDINARY,Player.player_x,Player.player_y)
 
-                Game.player_x=0
+                Player.player_x=0
                 Player.RestorePlayer()              # draw player sprite
                 HUD.UpdateHUD()
 
-                self.player_move(Game.player_x,Game.player_y)
+                self.player_move(Player.player_x,Player.player_y)
 
                 Game.CurrentAreaInStage += 1
 
@@ -951,8 +947,8 @@ class Game(object):
                 Game.move_forward_locked=True           # reset move forward locked flag
                 
         else:                   
-            if Game.check_if_moveable(Game.player_x+1,Game.player_y) == 0:                
-                self.player_move(Game.player_x+1,Game.player_y)                # move player character
+            if Game.check_if_moveable(Player.player_x+1,Player.player_y) == 0:                
+                self.player_move(Player.player_x+1,Player.player_y)                # move player character
           
     def move_player_left(self,event=None):
           Game.key_press_count += 1             # increment key count
@@ -964,8 +960,8 @@ class Game(object):
         
           Player.which_way_facing=Player.FACING_WEST      # change way the player is facing 
                      
-          if Game.check_if_moveable(Game.player_x-1,Game.player_y) == 0:    
-                        self.player_move(Game.player_x-1,Game.player_y)                # move player character
+          if Game.check_if_moveable(Player.player_x-1,Player.player_y) == 0:    
+                        self.player_move(Player.player_x-1,Player.player_y)                # move player character
             
     def move_player_up(self,event=None):
          Game.key_press_count += 1             # increment key count
@@ -977,12 +973,12 @@ class Game(object):
 
          Game.key_press_count=0
         
-         if Game.player_y-1 >= 1:
-            print("move up=",Game.check_if_moveable(Game.player_x,Game.player_y-1))
+         if Player.player_y-1 >= 1:
+            print("move up=",Game.check_if_moveable(Player.player_x,Player.player_y-1))
             
-            if Game.check_if_moveable(Game.player_x,Game.player_y-1) == 0:
+            if Game.check_if_moveable(Player.player_x,Player.player_y-1) == 0:
                 print("MOVE UP")
-                self.player_move(Game.player_x,Game.player_y-1)
+                self.player_move(Player.player_x,Player.player_y-1)
             
     def move_player_down(self,event=None):
          Game.key_press_count += 1             # increment key count
@@ -992,12 +988,12 @@ class Game(object):
 
          Game.key_press_count=0
 
-         playertype=Player.player_types[Game.player_selected]
+         playertype=Player.player_types[Player.player_selected]
 
          Player.which_way_facing=Player.FACING_SOUTH       # change which way the player is facing
                               
-         if Game.check_if_moveable(Game.player_x,Game.player_y+1) == 0:    
-                      self.player_move(Game.player_x,Game.player_y+1)
+         if Game.check_if_moveable(Player.player_x,Player.player_y+1) == 0:    
+                      self.player_move(Player.player_x,Player.player_y+1)
                       
     #
     # Set starting position
@@ -1007,10 +1003,10 @@ class Game(object):
         tempx=0
         tempy=0
 
-        playertype=Player.player_types[Game.player_selected]
+        playertype=Player.player_types[Player.player_selected]
         tile=playertype[Player.PLAYER_ENTRY_SPRITE]
 
-        self.player_move(Game.player_start_x,Game.player_start_y)          # draw player
+        self.player_move(Player.player_start_x,Player.player_start_y)          # draw player
 
 
     #
@@ -1041,17 +1037,17 @@ class Game(object):
     def pick_up_object(self,event=None):
 	    
            if Player.which_way_facing == Player.FACING_NORTH:                           # moving north            
-               x=Game.player_x
-               y=Game.player_y-1
+               x=Player.player_x
+               y=Player.player_y-1
            elif Player.which_way_facing == Player.FACING_WEST:                          # moving west            
-               x=Game.player_x-1
-               y=Game.player_y            
+               x=Player.player_x-1
+               y=Player.player_y            
            elif Player.which_way_facing == Player.FACING_SOUTH:            
-               x=Game.player_x
-               y=Game.player_y+1           
+               x=Player.player_x
+               y=Player.player_y+1           
            elif Player.which_way_facing == Player.FACING_EAST:
-               x=Game.player_x+1
-               y=Game.player_y           
+               x=Player.player_x+1
+               y=Player.player_y           
 
            foregroundtiles=Game.stage_tiles[Game.STAGE_FOREGROUND_TILES]   
            targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
@@ -1077,7 +1073,7 @@ class Game(object):
         inventory_entry=Player.inventory[Player.CurrentInventorySelected]
 
         if inventory_entry != None:
-            for (x,y) in (Game.player_x+1,Game.player_y),(Game.player_x-1,Game.player_y),(Game.player_x,Game.player_y-1),(Game.player_x,Game.player_y+1):
+            for (x,y) in (Player.player_x+1,Player.player_y),(Player.player_x-1,Player.player_y),(Player.player_x,Player.player_y-1),(Player.player_x,Player.player_y+1):
                
              if Game.check_if_moveable(x,y) == 0:  
                # add object to world
@@ -1088,11 +1084,11 @@ class Game(object):
                HUD.UpdateHUD()
                return
 
-    def selected_character(player):
+    def selected_character(player):      
         soundpath=os.path.join(os.getcwd(),"sounds/character_select.wav")                                          
         Sound.PlaySound(soundpath)                      # play sound
 
-        Game.player_selected=player           # save player type number
+        Player.player_selected=player           # save player type number
 
         # destroy buttons
         
@@ -1167,7 +1163,7 @@ class Game(object):
         Game.blockimages=[]
         Game.CurrentArea=0
         Game.npcs = []
-        Game.player_selected=-1
+        Player.player_selected=-1
         Game.key_press_count=0
                 
         # get an image object  
@@ -1215,7 +1211,7 @@ class Game(object):
                 charx=(1*250)+300
         
         while 1:   
-             if Game.player_selected != -1:         # continue from select screen to mainscreen
+             if Player.player_selected != -1:         # continue from select screen to mainscreen
                 break
                 
              Game.rootwindow.update()
@@ -1225,20 +1221,19 @@ class Game(object):
 #
 # redraw window and game world
 #*******************************************************
-
-
+        
         Game.screen_real_x_size=Game.w
         Game.screen_real_y_size=Game.h
 
-        Game.player_x=2
-        Game.player_y=2
+        Player.player_x=2
+        Player.player_y=2
         
-        self.generateworld(Game.WORLD_ORDINARY,Game.player_x,Game.player_y)               
+        self.generateworld(Game.WORLD_ORDINARY,Player.player_x,Player.player_y)               
                 
-        playertype=Player.player_types[Game.player_selected]
+        playertype=Player.player_types[Player.player_selected]
         tile=playertype[Player.PLAYER_ENTRY_SPRITE]
 
-        Player(Game.canvas,tile,Game.player_start_x,Game.player_start_y)                             # create player
+        Player(Game.canvas,tile,Player.player_start_x,Player.player_start_y)                             # create player
         
         HUD(Game.canvas)
         
@@ -1288,7 +1283,7 @@ class Game(object):
                 # If the player is on a block that has an action
                 # continue to do that action while they are on it
             
-               Game.do_block(Game.player_x,Game.player_y)      # do block action for current position
+               Game.do_block(Player.player_x,Player.player_y)      # do block action for current position
                                                                                   
                 # move the NPCs
 
@@ -1635,7 +1630,7 @@ class Game(object):
                         if targetxy >= int(Game.w/Tile.TILE_X_SIZE)*int(Game.h/Tile.TILE_Y_SIZE):
                             break
 
-                        if (x != Game.player_start_x) and (y != Game.player_start_y):
+                        if (x != Player.player_start_x) and (y != Player.player_start_y):
                             if Game.blockimages[targetxy].currentimagename != "tiles/slabs.gif":
                                  
                                  Game.blockimages[targetxy].ChangeTileImage(tilefilename)
@@ -1781,8 +1776,8 @@ class Game(object):
         generatable_items=[]
         Game.blockimages=[]
         Game.npcs=[]
-        Game.player_start_x=startx
-        Game.player_start_y=starty
+        Player.player_start_x=startx
+        Player.player_start_y=starty
         
         x=0
         y=0
@@ -2287,19 +2282,19 @@ class NPC:
 
         # if npc is next to the player, attack
 
-        for (x,y) in (Game.player_x,Game.player_y+1),(Game.player_x,Game.player_y-1),(Game.player_x+1,Game.player_y),(Game.player_x-1,Game.player_y):          
+        for (x,y) in (Player.player_x,Player.player_y+1),(Player.player_x,Player.player_y-1),(Player.player_x+1,Player.player_y),(Player.player_x-1,Player.player_y):          
           if  self.x == x and self.y == y:
             if random.randint(0,self.evil) == self.evil:                        
                                       
                 # redraw sprite to face player
     
-                   if Game.player_x > self.x:
+                   if Player.player_x > self.x:
                      self.which_way_facing=self.FACING_WEST
                    else:
                      self.which_way_facing=self.FACING_EAST
 
                    if self.no_y_flip == False:
-                       if Game.player_y > self.y:
+                       if Player.player_y > self.y:
                          self.which_way_facing=self.FACING_NORTH
                        else:
                          self.which_way_facing=self.FACING_SOUTH
@@ -2312,8 +2307,8 @@ class NPC:
             
         # move otherwise
         
-        if Game.player_y < self.y:
-                if (self.CheckMoveableNPC(Game.player_x,Game.player_y-1) == -1):
+        if Player.player_y < self.y:
+                if (self.CheckMoveableNPC(Player.player_x,Player.player_y-1) == -1):
                     return
                 
                 if (Game.check_if_moveable(self.x,self.y-1) == 0):
@@ -2332,8 +2327,8 @@ class NPC:
                 else:
                     self.MoveNPC(self.WHICH_WAY_SOUTH)
                     return
-        elif Game.player_y > self.y:
-                if (self.CheckMoveableNPC(Game.player_x,Game.player_y+1) == -1):
+        elif Player.player_y > self.y:
+                if (self.CheckMoveableNPC(Player.player_x,Player.player_y+1) == -1):
                     return
                 
                 if (Game.check_if_moveable(self.x,self.y+1) == 0):
@@ -2350,8 +2345,8 @@ class NPC:
                     self.MoveNPC(self.WHICH_WAY_SOUTH)
                     return
  
-        elif Game.player_x < self.x:
-                if (self.CheckMoveableNPC(Game.player_x-1,Game.player_y) == -1):
+        elif Player.player_x < self.x:
+                if (self.CheckMoveableNPC(Player.player_x-1,Player.player_y) == -1):
                     return
                 
                 if (Game.check_if_moveable(self.x-1,self.y) == 0):
@@ -2367,8 +2362,8 @@ class NPC:
                 else:
                     self.MoveNPC(self.WHICH_WAY_EAST)
                     return
-        elif Game.player_x > self.x:
-                if (self.CheckMoveableNPC(Game.player_x+1,Game.player_y-1) == -1):
+        elif Player.player_x > self.x:
+                if (self.CheckMoveableNPC(Player.player_x+1,Player.player_y-1) == -1):
                     return
                 
                 if (Game.check_if_moveable(self.x+1,self.y) == 0):
