@@ -229,7 +229,7 @@ class Player(object):
             Tile.rotate_clockwise_90degrees(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
 
         Player.ApplyingEffect=False              # Clear flag for applying effect
-        
+       
     #
     # select inventory item
     #
@@ -778,19 +778,7 @@ class Game(object):
     
     def NullFunction():
         pass
-        
-    def do_moveable_block(self):
-        targetxy=int(self.player_y*((Game.w/Tile.TILE_Y_SIZE)))+self.player_x
-        
-        for object_type_list in self.foreground_tiles:           
-            
-            if object_type_list[self.BLK_FILENAME] == Game.blockimages[targetxy]:         # if block matches
-                
-                  if not (object_type_list[self.BLK_FLAGS] & self.BLOCK_TRAVERSABLE):
-                     Game.blockimages[targetxy+1]=Game.blockimages[targetxy]
-                                          
-                     self.blockimages[targetxy].RestoreTile()
-                     
+	                     
     # do block action
     #
     def do_block(x,y):
@@ -1051,24 +1039,29 @@ class Game(object):
             os._exit(0)
             
     def pick_up_object(self,event=None):
-        #
-        # get target tile, depending on which way the player is facing
-        #
+	    
+           if Player.which_way_facing == Player.FACING_NORTH:                           # moving north            
+               x=Game.player_x
+               y=Game.player_y-1
+           elif Player.which_way_facing == Player.FACING_WEST:                          # moving west            
+               x=Game.player_x-1
+               y=Game.player_y            
+           elif Player.which_way_facing == Player.FACING_SOUTH:            
+               x=Game.player_x
+               y=Game.player_y+1           
+           elif Player.which_way_facing == Player.FACING_EAST:
+               x=Game.player_x+1
+               y=Game.player_y           
 
- 
-     foregroundtiles=Game.stage_tiles[Game.STAGE_FOREGROUND_TILES]
+           foregroundtiles=Game.stage_tiles[Game.STAGE_FOREGROUND_TILES]   
+           targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
         
-     targetxy=int(self.player_y*((Game.w/Tile.TILE_Y_SIZE)))+self.player_x
-        
-     for (x,y) in (Game.player_x+1,Game.player_y),(Game.player_x-1,Game.player_y),(Game.player_x,Game.player_y-1),(Game.player_x,Game.player_y+1):
- 
-        # blocks
-
-        for object_type_list in self.foreground_tiles:           
-            
-            if object_type_list[self.BLK_FILENAME] == Game.blockimages[targetxy]:         # if tile matches
+           for object_type_list in Game.item_tiles:
+                print(object_type_list[self.BLK_FILENAME],Game.blockimages[targetxy].currentimagename)
                 
-                if (object_type_list[self.BLK_FLAGS] & self.BLOCK_PICKUPABLE):       # tile can be picked up
+                if object_type_list[self.BLK_FILENAME] == Game.blockimages[targetxy].currentimagename:         # if tile matches
+                
+                    if (object_type_list[self.BLK_FLAGS] & self.BLOCK_PICKUPABLE):       # tile can be picked up
                         Player.inventory[Player.CurrentInventorySelected]=object_type_list          # add to inventory                        
                         HUD.UpdateHUD()                                   # update hud
 
@@ -1079,22 +1072,17 @@ class Game(object):
                         self.blockimages[targetxy].OverlayImage=None
                         
                         return
-
+                    
     def drop_object(self,event=None):
         inventory_entry=Player.inventory[Player.CurrentInventorySelected]
 
         if inventory_entry != None:
             for (x,y) in (Game.player_x+1,Game.player_y),(Game.player_x-1,Game.player_y),(Game.player_x,Game.player_y-1),(Game.player_x,Game.player_y+1):
                
-             if Game.check_if_moveable(self,x,y) == 0:  
+             if Game.check_if_moveable(x,y) == 0:  
                # add object to world
            
                targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x           
-
-               Game.blockimages[targetxy]=inventory_entry[self.BLK_FILENAME]                  # add to list
-
-               self.blockimages[targetxy].ChangeTileImage(inventory_entry[Game.BLK_FILENAME])     # set  image
-
                Player.inventory[Player.CurrentInventorySelected]=None
 
                HUD.UpdateHUD()
@@ -1290,7 +1278,9 @@ class Game(object):
       
      #
      # main event loop
-     #        
+     #
+        Game.npcs=[]
+      
         while 1:        
             if Game.InGame == True:
           #     if Midi.MusicEnabled == True and Midi.File != None:
@@ -1824,7 +1814,10 @@ class Game(object):
         if worldtype == Game.WORLD_ORDINARY:
             Game.generateforeground(self)               # generate foreground
             Game.generatebackground(self)               # generate background
-       
+
+            if Midi.MusicPossible == True:
+                Midi.PlayRandomMidi()
+
         # generate NPCs
         
         if (len(Game.npcs) < Game.min_npcs) and (Game.npcs != None):   
@@ -1841,11 +1834,9 @@ class Game(object):
         if worldtype == Game.WORLD_BOSS_FIGHT:
             npc_type=NPC.boss_npc_types[Game.CurrentStage]       
             Game.npcs += [NPC(npc_type)]
-             
-        # play music
-        
-        if Midi.MusicPossible == True:
-            Midi.PlayRandomMidi()
+
+            if Midi.MusicPossible == True:
+                Midi.StartMidiPlay("midi/bossfight.mid")
 
  
 #
@@ -1958,9 +1949,8 @@ class HUD:
                 inventory_entry=Player.inventory[inventorycount]              # get entry
 
                 if inventory_entry != None:
-                  # show small image
-              
-                    tilepath=os.path.join(os.getcwd(),inventory_entry[1])         # get name
+                  # show small image                    
+                    tilepath=os.path.join(os.getcwd(),inventory_entry[Game.BLK_FILENAME])         # get name
                 
                     HUD.image=PhotoImage(file=tilepath)
                     HUD.image.img=HUD.image
