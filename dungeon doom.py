@@ -2238,7 +2238,7 @@ class NPC:
             if Game.check_if_moveable(self.x,self.y) == 0:
                 break
 
-        # Intialize NPC  data
+        # Intialize NPC data
         
         self.npc_tiles=npc[self.NPC_TILE]
         self.attack_tiles=npc[self.NPC_ATTACK_TILE]
@@ -2250,7 +2250,7 @@ class NPC:
         self.attack_damage=npc[self.NPC_ATTACK_DAMAGE]*Game.CurrentStage        
         self.tick_count=int(time.perf_counter())+self.move_wait
         self.no_y_flip=npc[self.NPC_NO_Y_FLIP]
-
+        
         targetxy=int(self.y*((Game.w/Tile.TILE_Y_SIZE)+1))+self.y   
         self.DrawNPC_Sprite(self.npc_tiles,self.x,self.y)             # draw sprite
 
@@ -2385,6 +2385,37 @@ class NPC:
     def MoveNPC(self,which_way):
         ways = [ "","North","South","East","West" ]
 
+        # Check if NPC is colliding with another NPC
+        
+        for n in Game.npcs:
+                if n != self:
+                    npc_x_length=0
+                    npc_y_length=0
+                
+                    for tile_line in self.npc_tiles:
+                        if len(tile_line) > npc_x_length:     # get x size of NPC
+                            npc_x_length=len(tile_line)
+
+                        npc_y_length += 1
+                    
+
+                    if which_way == self.WHICH_WAY_NORTH:
+                        if (((self.x >= n.x) and (self.x <= (n.x+npc_x_length)))) and (((self.y-1 >= n.y) and (self.y <= (n.y+npc_y_length)))):                     
+                             return -1
+
+                    if which_way == self.WHICH_WAY_SOUTH:
+                        if (((self.x >= n.x) and (self.x <= (n.x+npc_x_length)))) and (((self.y+1 >= n.y) and (self.y <= (n.y+npc_y_length)))):                     
+                             return -1
+
+                    if which_way == self.WHICH_WAY_EAST:
+                        if (((self.x-1 >= n.x) and (self.x <= (n.x+npc_x_length)))) and (((self.y >= n.y) and (self.y <= (n.y+npc_y_length)))):                     
+                             return -1
+
+                    if which_way == self.WHICH_WAY_WEST:
+                        if (((self.x+1 >= n.x) and (self.x <= (n.x+npc_x_length)))) and (((self.y >= n.y) and (self.y <= (n.y+npc_y_length)))):                     
+                             return -1
+                    
+                        
         print("Move "+ways[which_way]+"=",self.x,self.y)
         self.restore_sprite_background(self.npc_tiles,self.x,self.y)
         
