@@ -1,4 +1,4 @@
-        
+#        
 # Dungeon Doom
 #
 # Version 2.0
@@ -10,6 +10,7 @@ import os
 import time
 import random
 import copy
+
 try:
  import pyaudio
 except ImportError:                 # no pyaudio
@@ -127,7 +128,10 @@ class Player(object):
     #
     def DestroyPlayer():
         return
-                
+
+    #
+    # Player dies
+    #
     def die():       
         Player.NumberOfLives -= 1
         HUD.UpdateHUD()
@@ -214,7 +218,7 @@ class Player(object):
         
             Tile.copy_image(Player.saveimage,Tile.TILE_X_SIZE-1,Tile.TILE_Y_SIZE-1,Player.PlayerImage)
 
-# restore background        
+    # restore background        
         if Player.which_way_facing == Player.FACING_NORTH:                           # moving north            
             Tile.copy_image(Player.PlayerImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)           
             
@@ -248,6 +252,9 @@ class Player(object):
 
         del(Player.inventory[which])
 
+    #
+    # Attack NPC
+    #
     def attack_handler():
             stagetiles=Game.stage_tiles[Game.CurrentStage-1]          # point to tiles for stage
         
@@ -266,7 +273,7 @@ class Player(object):
 
             targetxy=int(Player.player_y*((Game.w/Tile.TILE_Y_SIZE)+1))+Player.player_x
             
-# attack all around
+            # attack all around
             for blockxy in (Player.player_x,Player.player_y+1),(Player.player_x,Player.player_y-1),(Player.player_x-1,Player.player_y),(Player.player_x+1,Player.player_y):
                 x=blockxy[0]
                 y=blockxy[1]
@@ -659,9 +666,7 @@ class Game(object):
 		  	
     ]
 
-    stage1_foreground_tiles = [                        		  	
-		  	[ [["tiles/rock_plant.gif"]],lambda: Game.NullFunction(),0 ,100,5,5],\
-                        
+    stage1_foreground_tiles = [                        		  	                        
                         [ [["tiles/largetree001.gif","tiles/largetree002.gif","tiles/largetree003.gif"],\
                            ["tiles/largetree004.gif","tiles/largetree005.gif","tiles/largetree006.gif"],\
                            ["tiles/largetree007.gif","tiles/largetree008.gif","tiles/largetree009.gif"],\
@@ -685,9 +690,10 @@ class Game(object):
     
     #                    graphic file        function to call            flags               Gen. prob
     stage1_background_tiles = [
-		  	[ "tiles/bush.gif",lambda: Game.NullFunction(),0,5,20,20],\
+		  	[ "tiles/bush.gif",lambda: Game.NullFunction(),0,50,20,20],\
                         ["tiles/mossy_tile.gif",lambda: Game.NullFunction(),BLOCK_TRAVERSABLE,5,10,10],\
                         ["tiles/spikes.gif",lambda: Game.do_spikes(),BLOCK_TRAVERSABLE,5,10,10],\
+                     	[ [["tiles/rock_plant.gif"]],lambda: Game.NullFunction(),0 ,100,5,5],\
                        ]
 
     stage2_foreground_tiles = [                        		  	
@@ -868,8 +874,6 @@ class Game(object):
     #
 
     def player_move(self,x,y):
-           print("check=",x,y)
-
            if Game.check_if_moveable(x,y) == -1:            # check if moveabke
                return -1
 
@@ -1112,8 +1116,7 @@ class Game(object):
     #
     def CreateWindow(self):
             Game.rootwindow=Tk()                             # create root window
-            Game.rootwindow.title("Dungeon Doom")
-                        
+            Game.rootwindow.title("Dungeon Doom")  
             
             Game.w=Game.rootwindow.winfo_screenwidth()      # set window size
             Game.h=Game.rootwindow.winfo_screenheight() - (Game.rootwindow.winfo_rooty() - Game.rootwindow.winfo_y())
@@ -1130,8 +1133,8 @@ class Game(object):
 
             self.OptionsMenu=Menu(self.menubar)         # add options menu to menu bar
             self.menubar.add_cascade(label="Options",menu=self.OptionsMenu)
-            self.OptionsMenu.add_command(label="Disable sound",command=lambda: Sound.ToggleSound(self))
-            self.OptionsMenu.add_command(label="Disable music",command=lambda: Midi.ToggleMusic(self))
+            self.OptionsMenu.add_checkbutton(label="Disable sound",command=lambda: Sound.ToggleSound(self))
+            self.OptionsMenu.add_checkbutton(label="Disable music",command=lambda: Midi.ToggleMusic(self))
 
             if Sound.SoundPossible == False:                    # if no sound, disable menu
                 self.OptionsMenu.entryconfig(1,state=DISABLED)
@@ -1270,15 +1273,17 @@ class Game(object):
         Game.rootwindow.bind("7",lambda event: Player.select_inventory(7)) 
         Game.rootwindow.bind("8",lambda event: Player.select_inventory(8))
         Game.rootwindow.bind("9",lambda event: Player.select_inventory(9))
-      
+
+        Midi.MusicEnabled=False        # DEBUG
+        
      #
      # main event loop
      #
         
         while 1:        
             if Game.InGame == True:
-          #     if Midi.MusicEnabled == True and Midi.File != None:
-            #        Midi.PlayNextPartOfMidiFile()
+               if Midi.MusicEnabled == True and Midi.File != None:
+                    Midi.PlayNextPartOfMidiFile()
 
                 # If the player is on a block that has an action
                 # continue to do that action while they are on it
@@ -1342,10 +1347,6 @@ class Game(object):
       Sound.PlaySound(soundpath)
 
       Midi.wavfile=None
-      
-      print("Game over")
-
-      print("InGame=",Game.InGame)
 
 #
 # Player wins
@@ -1633,8 +1634,8 @@ class Game(object):
                         if (x != Player.player_start_x) and (y != Player.player_start_y):
                             if Game.blockimages[targetxy].currentimagename != "tiles/slabs.gif":
                                  
-                                 Game.blockimages[targetxy].ChangeTileImage(tilefilename)
-                                 Game.blockimages[targetxy].SetAttributes(tile_line[Game.BLK_FLAGS])
+                                Game.blockimages[targetxy].ChangeTileImage(tilefilename)
+                                Game.blockimages[targetxy].SetAttributes(tile_line[Game.BLK_FLAGS])
                                 
                 x += 1                 
                 y += 1
@@ -1655,7 +1656,6 @@ class Game(object):
         x=0
         y=0
                 
-        
         while y < int(Game.h/Tile.TILE_Y_SIZE):    
           while x < int(Game.w/Tile.TILE_X_SIZE):
           
@@ -1664,9 +1664,10 @@ class Game(object):
 
            which_tile=random.randint(0,len(foregroundtiles)-1)
 
-           tiles=foregroundtiles[which_tile]
+           tiles=foregroundtiles[1]#which_tile]
 
-           if random.randint(1,tiles[Game.BLK_GENPROB]) != 1:
+           if 1 == 2:
+           #if random.randint(1,tiles[Game.BLK_GENPROB]) != 1:
                x += 1
              
                if x >= int(Game.w/Tile.TILE_X_SIZE)-1:
@@ -1731,10 +1732,11 @@ class Game(object):
                     savey=y
 
                     for tile_line in x_tiles:
-                   
-                        savex=x
+                                       
                         for tile in tile_line:
-        
+
+                           print(x,y,tile)
+                           
                            if len(tile) > max_x_size:           # find end
                                max_x_size=len(tile_line)                    
 
@@ -1752,11 +1754,11 @@ class Game(object):
                            Game.blockimages[targetxy].currentimagename=tile
                            Game.blockimages[targetxy].SetAttributes(foregroundtiles[Game.BLK_FLAGS])
                            
-                           x +=  1                    
+                           x +=  1
+                           
                         y += 1
-                        x=oldx+max_x_size+1
+                        x=savex
                     
-
                     if y >= int(Game.h/Tile.TILE_Y_SIZE)-1:
                         break
                     
@@ -2045,7 +2047,6 @@ class NPC:
     WHICH_WAY_SOUTH=1
     WHICH_WAY_EAST=2
     WHICH_WAY_WEST=3
-
 
 # list entries
     NPC_TILE = 0
@@ -2416,7 +2417,7 @@ class NPC:
                              return -1
                     
                         
-        print("Move "+ways[which_way]+"=",self.x,self.y)
+        #print("Move "+ways[which_way]+"=",self.x,self.y)
         self.restore_sprite_background(self.npc_tiles,self.x,self.y)
         
         if which_way == self.WHICH_WAY_NORTH:
@@ -2447,24 +2448,21 @@ class NPC:
     # Restore sprite background
     #
     def restore_sprite_background(self,sprite,x,y):
-        myx=x
-        myy=y
+
+        savex=x
         
         for y_list in sprite:
-             savex=myx
              
              for x_list in y_list:                
-                targetxy=int(myy*((Game.w/Tile.TILE_Y_SIZE)))+myx
-
-                #print(myx,myy,targetxy)
+                targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
                 
                 Game.blockimages[targetxy].RestoreTileImage()
                 
-                myx += 1
+                x += 1
 
-             myx=savex
+             x=savex
              
-             myy += 1
+             y += 1
              
     def DestroyNPC(self):
         self.restore_sprite_background(self.npc_tiles,self.x,self.y)
