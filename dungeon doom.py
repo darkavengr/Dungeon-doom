@@ -309,7 +309,7 @@ class Player(object):
                             soundpath=os.path.join(os.getcwd(),"sounds/hit.wav")
                             Sound.PlaySound(soundpath)                      # play sound
 
-                            NPC.Invert_NPC_Sprite(n.npc_tiles,n.x,n.y)
+                            n.Invert_NPC_Sprite()
                             Game.rootwindow.after(Player.PLAYER_RESTORE_TIME,n.RestoreAfterAttack)     # restore npc
               
 
@@ -710,7 +710,7 @@ class Game(object):
                            ["tiles/mediumtree005.gif","tiles/mediumtree006.gif","tiles/mediumtree007.gif","tiles/mediumtree008.gif"],\
                            ["tiles/mediumtree009.gif","tiles/mediumtree010.gif","tiles/mediumtree011.gif","tiles/mediumtree012.gif"],\
                            ],lambda: Game.NullFunction(),0 ,10,10,10],\
-                          [ [[ "tiles/cottage_ul.gif","tiles/cottage_ur.gif"], [ "tiles/cottage_bl.gif","tiles/cottage_br.gif"]],lambda: Game.do_spikepit(),BLOCK_TRAVERSABLE ,1,10,10],\
+                        
                         ]
 
     stage2_background_tiles = [		  	
@@ -738,46 +738,27 @@ class Game(object):
 #
     def NullFunction():
         pass
-
-    def do_lava():
-        Player.hit(1)
         
     def do_health_potion():
         soundpath=os.path.join(os.getcwd(),"sounds/drinkpotion.wav")                                          
         Sound.PlaySound(soundpath)                      # play sound
 
-        Player.AdjustHealthLevel(1)
+        Player.AdjustHealthLevel(Player.HealthLevel/8)
                 
     def do_extra_life_potion():
-        print("extra life")
-        
         soundpath=os.path.join(os.getcwd(),"sounds/extralife.wav")                                          
         Sound.PlaySound(soundpath)                      # play sound
 
         if Player.NumberOfLives < Player.MaximumNumberOfLives:
             Player.NumberOfLives += 1
             HUD.UpdateHUD()
-    
-    def do_spikepit():
-         source_targetxy=int(Player.player_y*((Game.w/Tile.TILE_Y_SIZE)))+Player.player_x   
-         Game.blockimages[source_targetxy].RestoreTileImage()                                 # restore tile
-
-         Player.player_x=Player.player_start_x  
-         Player.player_y=Player.player_start_y         
-         Player.die();
 
     def do_spikes():         
-         Player.hit(1)
+         Player.hit(Player.HealthLevel/8)
          
     def do_quicksand():        
-         Player.hit(1)
-         
-    def do_burning_flame():
-        Player.hit(1)
-        
-    def do_stone_block():        
-        pass
-    
+         Player.hit(Player.HealthLevel/8)
+             
     def NullFunction():
         pass
 	                     
@@ -1402,7 +1383,7 @@ class Game(object):
             paths = []
             pathcount=0
 
-            PATH_X=0
+            PATH_X=1
             PATH_Y=1
             PATH_DIRECTION=2
             PATH_SIZE=3
@@ -1572,7 +1553,7 @@ class Game(object):
                 if random.randint(0,int(1000/tile_line[Game.BLK_GENPROB])) == 1:
                 
                     tilefilename=tile_line[Game.BLK_FILENAME] # Get name of item
-                    targetxy=random.randint(0,int((Game.w/Tile.TILE_X_SIZE)*(Game.h/Tile.TILE_Y_SIZE))) # Get location            
+                    targetxy=random.randint(1,int((Game.w/Tile.TILE_X_SIZE)*(Game.h/Tile.TILE_Y_SIZE))) # Get location            
 
                     # check if item can be placed there
             
@@ -1594,7 +1575,7 @@ class Game(object):
 
     def generateforeground(self):
         x=0
-        y=0
+        y=1
 
         stagetiles=Game.stage_tiles[Game.CurrentStage-1]          # point to tiles for stage
         
@@ -1642,9 +1623,6 @@ class Game(object):
 
 
     def generatebackground(self):
-        x=0
-        y=0
-
         stagetiles=Game.stage_tiles[Game.CurrentStage-1]          # point to tiles for stage
         
         foregroundtiles=stagetiles[Game.STAGE_FOREGROUND_TILES]
@@ -1654,7 +1632,7 @@ class Game(object):
     # generate background
 
         x=0
-        y=0
+        y=1
                 
         while y < int(Game.h/Tile.TILE_Y_SIZE):    
           while x < int(Game.w/Tile.TILE_X_SIZE):
@@ -2253,7 +2231,7 @@ class NPC:
         self.no_y_flip=npc[self.NPC_NO_Y_FLIP]
         
         targetxy=int(self.y*((Game.w/Tile.TILE_Y_SIZE)+1))+self.y   
-        self.DrawNPC_Sprite(self.npc_tiles,self.x,self.y)             # draw sprite
+        self.DrawNPC_Sprite(False)             # draw sprite
 
     def CheckMoveableNPC(self,x,y):
         myx=self.x
@@ -2300,7 +2278,7 @@ class NPC:
                        else:
                          self.which_way_facing=self.FACING_SOUTH
                          
-                   self.DrawNPC_Sprite(self.attack_tiles,self.x,self.y)              # draw sprite
+                   self.DrawNPC_Sprite(True)              # draw sprite
     
                    Player.hit(self.attack_damage*self.evil/Player.level)
 
@@ -2418,7 +2396,7 @@ class NPC:
                     
                         
         #print("Move "+ways[which_way]+"=",self.x,self.y)
-        self.restore_sprite_background(self.npc_tiles,self.x,self.y)
+        self.restore_sprite_background()
         
         if which_way == self.WHICH_WAY_NORTH:
             if self.y > 1:               
@@ -2440,18 +2418,20 @@ class NPC:
                  self.x -= 1
                  self.which_way_facing=self.FACING_WEST                
 
-        self.restore_sprite_background(self.npc_tiles,self.x,self.y)
-        self.DrawNPC_Sprite(self.npc_tiles,self.x,self.y)              # draw sprite     
+        self.restore_sprite_background()
+        self.DrawNPC_Sprite(False)              # draw sprite     
      
                     
     #
     # Restore sprite background
     #
-    def restore_sprite_background(self,sprite,x,y):
-
-        savex=x
+    def restore_sprite_background(self):
+        x=self.x
+        y=self.y
         
-        for y_list in sprite:
+        savex=self.x
+        
+        for y_list in self.npc_tiles:
              
              for x_list in y_list:                
                 targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
@@ -2465,18 +2445,25 @@ class NPC:
              y += 1
              
     def DestroyNPC(self):
-        self.restore_sprite_background(self.npc_tiles,self.x,self.y)
+        self.restore_sprite_background()
                  
         del(self)
              
 #
 # draw npc sprite
 
-    def DrawNPC_Sprite(self,sprite,x,y):    
-     
+    def DrawNPC_Sprite(self,IsAttacking):    
+     x=self.x
+     y=self.y
+
+     if IsAttacking == True:            # is attacking player
+         sprite=self.attack_tiles
+     else:	
+         sprite=self.npc_tiles
+         
      if self.which_way_facing == self.FACING_NORTH:
         
-        for x_list in sprite:
+        for x_list in self.npc_tiles:
             savex=x
 
             for y_list in x_list:
@@ -2545,10 +2532,13 @@ class NPC:
 
  
     def RestoreAfterAttack(self):
-        self.DrawNPC_Sprite(self.npc_tiles,self.x,self.y)              # draw sprite
+        self.DrawNPC_Sprite(False)              # draw sprite
 
-    def Invert_NPC_Sprite(sprite,x,y):    
-        for x_list in sprite:
+    def Invert_NPC_Sprite(self):
+        x=self.x
+        y=self.y
+        
+        for x_list in self.npc_tiles:
             savex=x
 
             for y_list in x_list:
