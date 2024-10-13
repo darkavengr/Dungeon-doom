@@ -10,6 +10,7 @@ import os
 import time
 import random
 import copy
+import threading
 
 try:
  import pyaudio
@@ -652,7 +653,7 @@ class Game(object):
     BLOCK_OVERLAYABLE = 64
     BLOCK_UNIQUE = 128
     BLOCK_TRAVERSABLE_NOT_NPC = 256
-
+    
     STAGE_FOREGROUND_TILES = 0
     STAGE_BACKGROUND_TILES = 1
     STAGE_BACKGROUND = 2
@@ -679,13 +680,7 @@ class Game(object):
                        [   [["tiles/mediumtree001.gif","tiles/mediumtree002.gif","tiles/mediumtree003.gif","tiles/mediumtree004.gif"],\
                            ["tiles/mediumtree005.gif","tiles/mediumtree006.gif","tiles/mediumtree007.gif","tiles/mediumtree008.gif"],\
                            ["tiles/mediumtree009.gif","tiles/mediumtree010.gif","tiles/mediumtree011.gif","tiles/mediumtree012.gif"],\
-                           ],lambda: Game.NullFunction(),0 ,10,10,10],\
-                              [   [["tiles/sand-top-left.gif","tiles/sand.gif","tiles/sand.gif","tiles/sand-top-right.gif"],\
-                           ["tiles/sand-left.gif","tiles/sand.gif","tiles/sand.gif","tiles/sand-right.gif"],\
-                           ["tiles/sand-left.gif","tiles/sand.gif","tiles/sand.gif","tiles/sand-right.gif"],\
-                           ["tiles/sand-left.gif","tiles/sand.gif","tiles/sand.gif","tiles/sand-right.gif"],\
-                           ["tiles/sand-bottom-left.gif","tiles/sand.gif","tiles/sand.gif","tiles/sand-bottom-right.gif"],\
-                           ],lambda: Game.do_quicksand(),BLOCK_TRAVERSABLE,10,10,10]                         
+                           ],lambda: Game.NullFunction(),0 ,10,10,10],
                         ]
     
     #                    graphic file        function to call            flags               Gen. prob
@@ -884,8 +879,6 @@ class Game(object):
 
            Player.player_x=x
            Player.player_y=y           
-
-           print(x,y)
            
            Game.do_block(x,y)                                 # do block
 
@@ -959,10 +952,8 @@ class Game(object):
          Game.key_press_count=0
         
          if Player.player_y-1 >= 1:
-            print("move up=",Game.check_if_moveable(Player.player_x,Player.player_y-1))
             
             if Game.check_if_moveable(Player.player_x,Player.player_y-1) == 0:
-                print("MOVE UP")
                 self.player_move(Player.player_x,Player.player_y-1)
             
     def move_player_down(self,event=None):
@@ -1255,17 +1246,16 @@ class Game(object):
         Game.rootwindow.bind("8",lambda event: Player.select_inventory(8))
         Game.rootwindow.bind("9",lambda event: Player.select_inventory(9))
 
-        Midi.MusicEnabled=False        # DEBUG
-        
+        if Midi.MusicEnabled == True and Midi.File != None:            
+            musicthread = threading.Thread(target=Midi.PlayMidiThread, daemon=True)
+            musicthread.start()
      #
      # main event loop
      #
         
         while 1:        
             if Game.InGame == True:
-               if Midi.MusicEnabled == True and Midi.File != None:
-                    Midi.PlayNextPartOfMidiFile()
-
+               
                 # If the player is on a block that has an action
                 # continue to do that action while they are on it
             
@@ -1371,7 +1361,7 @@ class Game(object):
 
       while 1:        
          if Midi.MusicEnabled == True and Midi.File != None:            
-            Midi.PlayNextPartOfMidiFile()
+            Midi.PlayMidiThread()
                       
                        
          Game.rootwindow.update()     
@@ -1779,17 +1769,17 @@ class Game(object):
             
           y += Tile.TILE_Y_SIZE
           x=0
-    
-        Game.generatepaths(startx,starty)                       # generate paths
-        
+            
         #
-        # If it's an ordinary world, generate the backround and foreground
+        # If it's an ordinary world, generate the paths, backround and foreground
         
         if worldtype == Game.WORLD_ORDINARY:
+            Game.generatepaths(startx,starty)                       # generate paths
+
             Game.generateforeground(self)               # generate foreground
             Game.generatebackground(self)               # generate background
 
-            if Midi.MusicPossible == True:
+            if Midi.MusicPossible == True:          # Start playing MIDI file
                 Midi.PlayRandomMidi()
 
         # generate NPCs
@@ -1809,6 +1799,8 @@ class Game(object):
             npc_type=NPC.boss_npc_types[Game.CurrentStage]       
             Game.npcs += [NPC(npc_type)]
 
+            print("Midi.MusicPossible=",Midi.MusicPossible)
+            
             if Midi.MusicPossible == True:
                 Midi.StartMidiPlay("midi/bossfight.mid")
 
@@ -2560,8 +2552,8 @@ class Midi:
  	
  File=None
  midifiles = ["midi/boarshead.mid","midi/ending.mid","midi/patapan.mid","midi/three_ravens.mid","midi/wassail.mid" ]
- bossmidifile="midi/battlefield.mid"
- midichunksize=1
+
+ midichunksize=10
  PlayChunkCount=0
  
  #
@@ -2593,20 +2585,22 @@ class Midi:
    Midi.mes=Midi.mid.play()
 
    Midi.midi_iter=iter(Midi.mes)
-   
- def PlayNextPartOfMidiFile():
-        Midi.PlayChunkCount += 1
-        
-        if Midi.PlayChunkCount < 10:
-            return(0)
-    
-        for count in range(0,Midi.midichunksize):
+
+   #
+   # Play MIDI in background
+   #
+   # Runs in background
+   #
+ def PlayMidiThread():
+        print("PLaying MIDI chunk")
+
+        while True:                
                 message=next(Midi.midi_iter)            # get next midi
                 
                 print(message)
                 Midi.output.send(message)        
 
-        return(0)
+        
 
 #
 # End MIDI play
