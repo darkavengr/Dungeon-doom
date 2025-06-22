@@ -3,6 +3,17 @@
 #
 # Version 2.0
 #
+#  Dungeon Doom is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#  Dungeon Doom is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY# without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  You should have received a copy of the GNU General Public License
+#  along with Dungeon Doom.  If not, see <https://www.gnu.org/licenses/>.
+#
 import warnings
 from tkinter import *
 from tkinter import messagebox
@@ -253,7 +264,7 @@ class Player(object):
 
         del(Player.inventory[which])
 
-    #
+    #	
     # Attack NPC
     #
     def attack_handler():
@@ -293,25 +304,30 @@ class Player(object):
                              Player.ApplyEffect(Player.player_x,Player.player_y,Player.PLAYER_RESTORE_TIME,tilepath)           # show destroyed tile
                              return
     
-                # attacking npc
+                # attacking NPC
 
                 for n in Game.npcs:                   
                     if (n.x == x) and (n.y == y):           # is npc at coordinates                        
-                        n.stamina -= attackpercent
+                        n.stamina -= (n.stamina * attackpercent)
 
+                        print("n.stamina=",n.stamina)
+                        
                         if (n.stamina < 1):                            
                             soundpath=os.path.join(os.getcwd(),"sounds/monster_die.wav")
                             Sound.PlaySound(soundpath)                      # play sound
-                           
+
+                            print("NPC destroyed")
+                            
                             n.DestroyNPC()                                                    
                             Game.npcs.remove(n)                            
                         else:
-                
                             soundpath=os.path.join(os.getcwd(),"sounds/hit.wav")
                             Sound.PlaySound(soundpath)                      # play sound
 
                             n.Invert_NPC_Sprite()
-                            Game.rootwindow.after(Player.PLAYER_RESTORE_TIME,n.RestoreAfterAttack)     # restore npc
+
+                            if n.stamina >= 2:
+                                Game.rootwindow.after(Player.PLAYER_RESTORE_TIME,n.RestoreAfterAttack)     # restore NPC
               
 
     #
@@ -367,7 +383,9 @@ class Tile(object):
     def ChangeTileImage(self,imagename):
         self.image=PhotoImage(file=imagename)        # load image
         self.currentimagename=imagename
-        self.previousimagename=imagename
+
+        if self.previousimagename != "":
+            self.previousimagename=imagename
         
         Game.canvas.create_image(self.x,self.y,anchor=NW,image=self.image)                # place image on top of background
         Game.canvas.pack()
@@ -1398,8 +1416,6 @@ class Game(object):
 
                   pathcount += 1
                   
-                 # print(x,y,targetxy,whichway)
-
                   Game.blockimages[targetxy].ChangeTileImage("tiles/slabs.gif")
                  
                   if whichway == 0:           # vertical up
@@ -1676,9 +1692,7 @@ class Game(object):
                       break
        
             x_tiles=tiles[0]
-
-           # print("IsGeneratable=",IsGeneratable)
-            
+ 
             if IsGeneratable == False:
                     x += 1
 
@@ -1703,12 +1717,9 @@ class Game(object):
                                        
                         for tile in tile_line:
 
-                           print(x,y,tile)
-                           
                            if len(tile) > max_x_size:           # find end
                                max_x_size=len(tile_line)                    
 
-                          # print(tile,x,y,count)
                            targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
 
                            if targetxy >= int(Game.w/Tile.TILE_X_SIZE)*int(Game.h/Tile.TILE_Y_SIZE):
@@ -1785,7 +1796,7 @@ class Game(object):
         # generate NPCs
         
         if (len(Game.npcs) < Game.min_npcs) and (Game.npcs != None):   
-                    Game.number_of_npcs=(2^Game.CurrentStage)+1
+                    Game.number_of_npcs=2 ** ((Game.CurrentStage)+1)
 
                     Game.npcs=[]
                     
@@ -1799,8 +1810,6 @@ class Game(object):
             npc_type=NPC.boss_npc_types[Game.CurrentStage]       
             Game.npcs += [NPC(npc_type)]
 
-            print("Midi.MusicPossible=",Midi.MusicPossible)
-            
             if Midi.MusicPossible == True:
                 Midi.StartMidiPlay("midi/bossfight.mid")
 
@@ -2031,7 +2040,9 @@ class NPC:
     
     movement=0
     npc_tiles = []
-        
+    x=0
+    y=0
+    
     goblin_tiles = [[ "tiles/goblin.gif"] ]
     goblin_attack_tiles = [[ "tiles/goblin_attack.gif"] ]
     
@@ -2245,7 +2256,6 @@ class NPC:
         return 0
 
     def MoveNPC_Toward_Player(self):       
-        
         if time.perf_counter() < self.tick_count:
             return
         
@@ -2283,16 +2293,12 @@ class NPC:
                     return
                 
                 if (Game.check_if_moveable(self.x,self.y-1) == 0):
-                   
-                    #print("NPC move north")
                     self.MoveNPC(self.WHICH_WAY_NORTH)
                     return
                 elif (Game.check_if_moveable(self.x-1,self.y) == 0):
-                    #print("NPC move north")
                     self.MoveNPC(self.WHICH_WAY_EAST)
                     return
                 elif (Game.check_if_moveable(self.x+1,self.y) == 0):
-                    #print("NPC move north")
                     self.MoveNPC(self.WHICH_WAY_WEST)
                     return
                 else:
@@ -2303,7 +2309,6 @@ class NPC:
                     return
                 
                 if (Game.check_if_moveable(self.x,self.y+1) == 0):
-                    #print("NPC move south")
                     self.MoveNPC(self.WHICH_WAY_SOUTH)
                     return
                 elif (Game.check_if_moveable(self.x-1,self.y) == 0):
@@ -2321,7 +2326,6 @@ class NPC:
                     return
                 
                 if (Game.check_if_moveable(self.x-1,self.y) == 0):
-                    #print("NPC move west")
                     self.MoveNPC(self.WHICH_WAY_WEST)
                     return
                 elif (Game.check_if_moveable(self.x,self.y-1) == 0):
@@ -2338,7 +2342,6 @@ class NPC:
                     return
                 
                 if (Game.check_if_moveable(self.x+1,self.y) == 0):
-                    #print("NPC move east")
                     self.MoveNPC(self.WHICH_WAY_EAST)
                     return
                 elif (Game.check_if_moveable(self.x,self.y-1) == 0):
@@ -2427,7 +2430,7 @@ class NPC:
              
              for x_list in y_list:                
                 targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
-                
+
                 Game.blockimages[targetxy].RestoreTileImage()
                 
                 x += 1
@@ -2437,8 +2440,11 @@ class NPC:
              y += 1
              
     def DestroyNPC(self):
+        print(self)
+
+        self.IsDead=TRUE
         self.restore_sprite_background()
-                 
+
         del(self)
              
 #
@@ -2592,8 +2598,6 @@ class Midi:
    # Runs in background
    #
  def PlayMidiThread():
-        print("PLaying MIDI chunk")
-
         while True:                
                 message=next(Midi.midi_iter)            # get next midi
                 
@@ -2638,7 +2642,7 @@ class Help:
    # Display about dialog
    #
     def about():
-          messagebox.showinfo("About","Dungeon Doom (c) Matthew Boote 2023")
+          messagebox.showinfo("About","Dungeon Doom (c) Matthew Boote 2025")
 
 #
 # Main function
