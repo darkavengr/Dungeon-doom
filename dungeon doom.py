@@ -397,10 +397,12 @@ class Tile(object):
         if Game.InGame == False:
             return
 
+        print("previous=",self.previousimagename)
+        
         if self.previousimagename != None:
             self.image.config(file=self.previousimagename)      # change image
             self.currentimagename=self.previousimagename
-            
+     
         if self.OverlayImage != None:           
             Tile.copy_image(self.OverlayImage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,self.image)
             
@@ -1015,7 +1017,6 @@ class Game(object):
         else:                
                 Game()
 
-
     #
     # Quit
     #
@@ -1264,9 +1265,9 @@ class Game(object):
         Game.rootwindow.bind("8",lambda event: Player.select_inventory(8))
         Game.rootwindow.bind("9",lambda event: Player.select_inventory(9))
 
-        if Midi.MusicEnabled == True and Midi.File != None:            
-            musicthread = threading.Thread(target=Midi.PlayMidiThread, daemon=True)
-            musicthread.start()
+        #if Midi.MusicEnabled == True and Midi.File != None:            
+        #    musicthread = threading.Thread(target=Midi.PlayMidiThread, daemon=True)
+        #    musicthread.start()
      #
      # main event loop
      #
@@ -1374,8 +1375,8 @@ class Game(object):
 
       Midi.wavfile=None
             
-      if Midi.MusicPossible == True:
-             Midi.StartMidiPlay("midi/ending.mid")    
+     # if Midi.MusicPossible == True:
+     #        Midi.StartMidiPlay("midi/ending.mid")    
 
       while 1:        
          if Midi.MusicEnabled == True and Midi.File != None:            
@@ -1720,7 +1721,7 @@ class Game(object):
                            if len(tile) > max_x_size:           # find end
                                max_x_size=len(tile_line)                    
 
-                           targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
+                           
 
                            if targetxy >= int(Game.w/Tile.TILE_X_SIZE)*int(Game.h/Tile.TILE_Y_SIZE):
                                 break
@@ -1799,7 +1800,7 @@ class Game(object):
                     Game.number_of_npcs=2 ** ((Game.CurrentStage)+1)
 
                     Game.npcs=[]
-                    
+
                     for n in range(0,Game.number_of_npcs):
                         npc_type=NPC.npc_types[random.randint(0,len(NPC.npc_types)-1)]
                         Game.npcs += [NPC(npc_type)]
@@ -2022,7 +2023,7 @@ class NPC:
     FACING_EAST  = 2
     FACING_WEST  = 3
 
-    WHICH_WAY_NORTH=0
+    WHICH_WAY_NORTH =0
     WHICH_WAY_SOUTH=1
     WHICH_WAY_EAST=2
     WHICH_WAY_WEST=3
@@ -2037,11 +2038,18 @@ class NPC:
     NPC_MOVEWAIT = 6
     NPC_ATTACK_DAMAGE = 7
     NPC_NO_Y_FLIP = 8
+    NPC_SHOOT_ODDS = 9
+    NPC_SHOOT_DISTANCE = 10
+    NPC_SHOOT_TILE = 11
+    NPC_SHOOT_SOUND = 12
+    NPC_X_SIZE = 13
+    NPC_Y_SIZE = 14
     
     movement=0
     npc_tiles = []
     x=0
     y=0
+    wait=100
     
     goblin_tiles = [[ "tiles/goblin.gif"] ]
     goblin_attack_tiles = [[ "tiles/goblin_attack.gif"] ]
@@ -2170,24 +2178,25 @@ class NPC:
                      ["tiles/darklord_attack_056.gif","tiles/darklord_attack_057.gif","tiles/darklord_attack_058.gif","tiles/darklord_attack_059.gif","tiles/darklord_attack_060.gif","tiles/darklord_attack_061.gif","tiles/darklord_attack_062.gif","tiles/darklord_attack_063.gif"]]
     
                       
-    #              Tile         Attack tile         Stamina Evil MoveOdds   GenOdds Wait Damage Allow Y flip
+    #           Tile Attack tile Stamina Evil MoveOdds GenOdds  Wait Damage Allow Y flip Shoot prob. Shoot dist. Shoot tile Shoot sound X size Y size
+
+    npc_types = [[ goblin_tiles,goblin_attack_tiles,  1,2,2,4,0.20,1,True,0,0,"","",1,1],
+                 [ ork_tiles,   ork_attack_tiles,     2,2,2,4,0.30,1,True,0,0,"","",2,2],
+                 [ ogre_tiles,  ogre_attack_tiles,    1,2,2,5,0.40,2,True,5,20,"tiles/fireball.gif","sounds/fireball.wav",2,2],
+                 [ troll_tiles, troll_attack_tiles,   3,3,2,2,0.30,3,True,0,0,"","",1,1],
+                 [ sk_tiles,    sk_attack_tiles,      2,1,1,3,0.20,1,True,5,20,"","",1,1],
+                 [ zombie_tiles,zombie_attack_tiles,  1,1,2,3,0.20,1,True,5,20,"tiles/fireball.gif","sounds/fireball.wav",1,1],
+                 [ demon_tiles, demon_attack_tiles,   2,1,2,3,0.20,2,True,5,20,"tiles/fireball.gif","sounds/fireball.wav",1,1],
+                 ]
     
-    npc_types = [[ goblin_tiles,goblin_attack_tiles,  1,     2,   4,         4,      0.20,   1, True],
-                 [ ork_tiles,   ork_attack_tiles,     2,     2,   2,         4,      0.30,   1, True],
-                 [ ogre_tiles,  ogre_attack_tiles,    1,     2,   3,         5,      0.40,   2, True],
-                 [ troll_tiles, troll_attack_tiles,   3,     3,   3,         2,      0.30,   3, True],
-                 [ sk_tiles,    sk_attack_tiles,      2,     1,   1,         3,      0.20,   1, True],
-                 [ zombie_tiles,zombie_attack_tiles,  1,     1,   2,         3,      0.20,   1, True],
-                 [ demon_tiles, demon_attack_tiles,   2,     1,   2,         3,      0.20,   2, True]]
-    
-    boss_npc_types = [[ skeleton_boss_tiles,skeleton_boss_attack_tiles,20,  6,   3,   4,      0.20,   5, False],
-                      [ dragon_tiles,dragon_attack_tiles,    3,   5,   2,   4,      0.20,   25,  False],
-                      [ wolf_tiles, wolf_attack_tiles,       2,   2,   2,   3,      0.20,   15,  False],
-                      [ spider_tiles,spider_attack_tiles,    2,   2,   2,   3,      0.20,   20,  False],                     
-                      [ minotaur_tiles,minotaur_attack_tiles,5,   6,   3,   4,      0.20,   5,  False],
-                      [ ape_tiles,ape_attack_tiles,          5,   7,   4,   4,      0.20,   10,  False],
-                      [ pig_tiles,pig_attack_tiles,          5,   8,   5,   4,      0.20,   15,  False],
-                      [ darklord_tiles,darklord_attack_tiles,6,  10,   5,   4,      0.10,   50,  False],
+    boss_npc_types = [[ skeleton_boss_tiles,skeleton_boss_attack_tiles,20,6,3,4,0.20,5,False,0,0,"","",4,4],
+                      [ dragon_tiles,dragon_attack_tiles,    3,5,2,4,0.20,25,False,5,20,"tiles/fireball.gif","sounds/fireball.wav",4,4],
+                      [ wolf_tiles, wolf_attack_tiles,       2,2,2,3,0.20,15,False,0,0,"","",4,4],
+                      [ spider_tiles,spider_attack_tiles,    2,2,2,3,0.20,20,False,0,0,"","",4,4],                     
+                      [ minotaur_tiles,minotaur_attack_tiles,5,6,3,4,0.20,5,False,0,0,"","",7,7],
+                      [ ape_tiles,ape_attack_tiles,          5,7,4,4,0.20,10,False,0,0,"","",7,7],
+                      [ pig_tiles,pig_attack_tiles,          5,8,5,4,0.20,15,False,0,0,"","",7,7],
+                      [ darklord_tiles,darklord_attack_tiles,6,10,5,4,0.10,50,False,0,0,"","",8,8],
                       ]
                       
 
@@ -2232,7 +2241,14 @@ class NPC:
         self.attack_damage=npc[self.NPC_ATTACK_DAMAGE]*Game.CurrentStage        
         self.tick_count=int(time.perf_counter())+self.move_wait
         self.no_y_flip=npc[self.NPC_NO_Y_FLIP]
-        
+        self.shootodds=npc[self.NPC_SHOOT_ODDS]
+        self.IsShooting=False
+        self.shootdistance=npc[self.NPC_SHOOT_DISTANCE]
+        self.shoot_tile=npc[self.NPC_SHOOT_TILE]
+        self.shoot_sound=npc[self.NPC_SHOOT_SOUND]
+        self.x_size=npc[self.NPC_X_SIZE]
+        self.y_size=npc[self.NPC_Y_SIZE]
+       
         targetxy=int(self.y*((Game.w/Tile.TILE_Y_SIZE)+1))+self.y   
         self.DrawNPC_Sprite(False)             # draw sprite
 
@@ -2261,98 +2277,192 @@ class NPC:
         
         self.tick_count=time.perf_counter()+self.move_wait
 
-        # if npc is next to the player, attack
+        # Shoot fire
+        if (random.randint(0,self.shootodds) == self.shootodds) and (self.IsShooting == False) and (self.shoot_tile != ""):
+            print("Started shooting")
+            
+            self.IsShooting=True
+            self.flamecount=0
 
-        for (x,y) in (Player.player_x,Player.player_y+1),(Player.player_x,Player.player_y-1),(Player.player_x+1,Player.player_y),(Player.player_x-1,Player.player_y):          
-          if  self.x == x and self.y == y:
-            if random.randint(0,self.evil) == self.evil:                        
+            # set initial x and y position
+            if self.which_way_facing == self.FACING_NORTH:
+                self.flamex=self.x
+                self.flamey=self.y-self.y_size
+            elif self.which_way_facing == self.FACING_SOUTH:
+                self.flamex=self.x
+                self.flamey=self.y+self.y_size
+            elif self.which_way_facing == self.FACING_EAST:
+                self.flamey=self.y
+                self.flamex=self.x+self.x_size
+            elif self.which_way_facing == self.FACING_WEST:
+                self.flamey=self.y
+                self.flamex=self.x-self.x_size
+
+            # save the x and y cooordinates to restore the tile later
+            self.lastx=self.flamex
+            self.lasty=self.flamey
+            
+            print("Initial last=",self.lastx,self.lasty)
+
+            soundpath=os.path.join(os.getcwd(),self.shoot_sound)
+            Sound.PlaySound(soundpath)                      # play associated sound
+            
+        if self.IsShooting == True:         # is currently shooting
+             # draw flames
+                  print("flame=",self.flamex,self.flamey)
+
+                  # restore previously drawn tile
+                
+                  print("Restoring ",self.lastx,self.lasty)
+                      
+                  targetxy=int(self.lasty*(Game.w/Tile.TILE_Y_SIZE))+self.lastx
+                  Game.blockimages[targetxy].RestoreTileImage()
+                  #Game.blockimages[targetxy].ChangeTileImage("tiles/grass.gif")     # set  image
+
+                  # If attempting to shoot through a non-traversable tile (walls, NPCs etc)
+                  # stop moving and destroy it
+                  if Game.check_if_moveable(self.flamex,self.flamey) == -1:            # check if moveabke
+                      self.IsShooting=FALSE
+                      
+                      targetxy=int(self.lasty*(Game.w/Tile.TILE_Y_SIZE))+self.lastx
+                      Game.blockimages[targetxy].RestoreTileImage()
+                      #Game.blockimages[targetxy].ChangeTileImage("tiles/grass.gif")     # set  image  
+                      return
+            
+                  # Overlay tile with image
+                  targetxy=int(self.flamey*((Game.w/Tile.TILE_Y_SIZE)))+self.flamex 
+                  self.tempimage=PhotoImage(file=self.shoot_tile)
+                  
+                  self.flamecount += 1
+
+                  self.lastx=self.flamex
+                  self.lasty=self.flamey
+
+                  if self.which_way_facing == self.FACING_NORTH:
+                        Tile.copy_image(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)                
+                        self.flamey -= 1    
+                  elif self.which_way_facing == self.FACING_SOUTH:
+                        Tile.flip_image_y(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
+                        self.flamey += 1
+        
+                  elif self.which_way_facing == self.FACING_EAST:
+                        self.flamex += 1
+                        Tile.rotate_clockwise_90degrees(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
+                        
+                  elif self.which_way_facing == self.FACING_WEST:
+                        self.flamex -= 1
+                        Tile.rotate_anticlockwise_90degrees(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
+                        
+                  # Has hit player
+                  
+                  if (self.flamey == Player.player_y) and (Player.player_x == self.flamex):
+                            Player.hit(self.attack_damage*self.evil/Player.level)
+                            
+                  print("Moving to ",self.flamex,self.flamey)
+
+                  # Either at edge of screen or moved to distance
+                  
+                  if (self.flamex == 0) or (self.flamex == (Game.w/Tile.TILE_X_SIZE)) or \
+                     (self.flamey == 1) or (self.flamey == (Game.w/Tile.TILE_Y_SIZE)) or \
+                     (self.flamecount == self.shootdistance+1):        # at end
+                        self.IsShooting=FALSE
+
+                        targetxy=int(self.lasty*(Game.w/Tile.TILE_Y_SIZE))+self.lastx
+                        Game.blockimages[targetxy].RestoreTileImage()
+                        #Game.blockimages[targetxy].ChangeTileImage("tiles/grass.gif")     # set  image
+
+        else:   
+    
+                # if npc is next to the player, attack
+                for (x,y) in (Player.player_x,Player.player_y+1),(Player.player_x,Player.player_y-1),(Player.player_x+1,Player.player_y),(Player.player_x-1,Player.player_y):
+                    if  self.x == x and self.y == y:
+                        if random.randint(0,self.evil) == self.evil:
                                       
-                # redraw sprite to face player
+                        # redraw sprite to face player
     
-                   if Player.player_x > self.x:
-                     self.which_way_facing=self.FACING_WEST
-                   else:
-                     self.which_way_facing=self.FACING_EAST
+                           if Player.player_x > self.x:
+                             self.which_way_facing=self.FACING_WEST
+                           else:
+                               self.which_way_facing=self.FACING_EAST
 
-                   if self.no_y_flip == False:
-                       if Player.player_y > self.y:
-                         self.which_way_facing=self.FACING_NORTH
-                       else:
-                         self.which_way_facing=self.FACING_SOUTH
+                           if self.no_y_flip == False:
+                               if Player.player_y > self.y:
+                                 self.which_way_facing=self.FACING_NORTH
+                               else:
+                                 self.which_way_facing=self.FACING_SOUTH
                          
-                   self.DrawNPC_Sprite(True)              # draw sprite
+                           self.DrawNPC_Sprite(True)              # draw sprite
     
-                   Player.hit(self.attack_damage*self.evil/Player.level)
-
-            return
+                           Player.hit(self.attack_damage*self.evil/Player.level)
+                           return
             
         # move otherwise
-        
-        if Player.player_y < self.y:
-                if (self.CheckMoveableNPC(Player.player_x,Player.player_y-1) == -1):
-                    return
+         
+                if Player.player_y < self.y:
+                    if (self.CheckMoveableNPC(Player.player_x,Player.player_y-1) == -1):
+                        return
                 
-                if (Game.check_if_moveable(self.x,self.y-1) == 0):
-                    self.MoveNPC(self.WHICH_WAY_NORTH)
-                    return
-                elif (Game.check_if_moveable(self.x-1,self.y) == 0):
-                    self.MoveNPC(self.WHICH_WAY_EAST)
-                    return
-                elif (Game.check_if_moveable(self.x+1,self.y) == 0):
-                    self.MoveNPC(self.WHICH_WAY_WEST)
-                    return
-                else:
-                    self.MoveNPC(self.WHICH_WAY_SOUTH)
-                    return
-        elif Player.player_y > self.y:
-                if (self.CheckMoveableNPC(Player.player_x,Player.player_y+1) == -1):
-                    return
+                    if (Game.check_if_moveable(self.x,self.y-1) == 0):
+                        self.MoveNPC(self.WHICH_WAY_NORTH)
+                        return
+                    elif (Game.check_if_moveable(self.x-1,self.y) == 0):
+                        self.MoveNPC(self.WHICH_WAY_EAST)
+                        return
+                    elif (Game.check_if_moveable(self.x+1,self.y) == 0):
+                        self.MoveNPC(self.WHICH_WAY_WEST)
+                        return
+                    else:
+                        self.MoveNPC(self.WHICH_WAY_SOUTH)
+                        return
+                elif Player.player_y > self.y:
+                    if (self.CheckMoveableNPC(Player.player_x,Player.player_y+1) == -1):
+                        return
                 
-                if (Game.check_if_moveable(self.x,self.y+1) == 0):
-                    self.MoveNPC(self.WHICH_WAY_SOUTH)
-                    return
-                elif (Game.check_if_moveable(self.x-1,self.y) == 0):
-                    self.MoveNPC(self.WHICH_WAY_EAST)
-                    return
-                elif (Game.check_if_moveable(self.x+1,self.y) == 0):
-                    self.MoveNPC(self.WHICH_WAY_WEST)
-                    return
-                else:
-                    self.MoveNPC(self.WHICH_WAY_SOUTH)
-                    return
+                    if (Game.check_if_moveable(self.x,self.y+1) == 0):
+                        self.MoveNPC(self.WHICH_WAY_SOUTH)
+                        return
+                    elif (Game.check_if_moveable(self.x-1,self.y) == 0):
+                        self.MoveNPC(self.WHICH_WAY_EAST)
+                        return
+                    elif (Game.check_if_moveable(self.x+1,self.y) == 0):
+                        self.MoveNPC(self.WHICH_WAY_WEST)
+                        return
+                    else:
+                        self.MoveNPC(self.WHICH_WAY_SOUTH)
+                        return
  
-        elif Player.player_x < self.x:
-                if (self.CheckMoveableNPC(Player.player_x-1,Player.player_y) == -1):
-                    return
+                elif Player.player_x < self.x:
+                    if (self.CheckMoveableNPC(Player.player_x-1,Player.player_y) == -1):
+                        return
                 
-                if (Game.check_if_moveable(self.x-1,self.y) == 0):
-                    self.MoveNPC(self.WHICH_WAY_WEST)
-                    return
-                elif (Game.check_if_moveable(self.x,self.y-1) == 0):
-                    self.MoveNPC(self.WHICH_WAY_SOUTH)
-                    return
-                elif (Game.check_if_moveable(self.x,self.y+1) == 0):
-                    self.MoveNPC(self.WHICH_WAY_NORTH)
-                    return
-                else:
-                    self.MoveNPC(self.WHICH_WAY_EAST)
-                    return
-        elif Player.player_x > self.x:
-                if (self.CheckMoveableNPC(Player.player_x+1,Player.player_y-1) == -1):
-                    return
+                    if (Game.check_if_moveable(self.x-1,self.y) == 0):
+                        self.MoveNPC(self.WHICH_WAY_WEST)
+                        return
+                    elif (Game.check_if_moveable(self.x,self.y-1) == 0):
+                        self.MoveNPC(self.WHICH_WAY_SOUTH)
+                        return
+                    elif (Game.check_if_moveable(self.x,self.y+1) == 0):
+                        self.MoveNPC(self.WHICH_WAY_NORTH)
+                        return
+                    else:
+                        self.MoveNPC(self.WHICH_WAY_EAST)
+                        return
+                elif Player.player_x > self.x:
+                    if (self.CheckMoveableNPC(Player.player_x+1,Player.player_y-1) == -1):
+                        return
                 
-                if (Game.check_if_moveable(self.x+1,self.y) == 0):
-                    self.MoveNPC(self.WHICH_WAY_EAST)
-                    return
-                elif (Game.check_if_moveable(self.x,self.y-1) == 0):
-                    self.MoveNPC(self.WHICH_WAY_SOUTH)
-                    return
-                elif (Game.check_if_moveable(self.x,self.y+1) == 0):
-                    self.MoveNPC(self.WHICH_WAY_NORTH)
-                    return
-                else:
-                    self.MoveNPC(self.WHICH_WAY_WEST)
-                    return
+                    if (Game.check_if_moveable(self.x+1,self.y) == 0):
+                        self.MoveNPC(self.WHICH_WAY_EAST)
+                        return
+                    elif (Game.check_if_moveable(self.x,self.y-1) == 0):
+                        self.MoveNPC(self.WHICH_WAY_SOUTH)
+                        return
+                    elif (Game.check_if_moveable(self.x,self.y+1) == 0):
+                        self.MoveNPC(self.WHICH_WAY_NORTH)
+                        return
+                    else:
+                        self.MoveNPC(self.WHICH_WAY_WEST)
+                        return
         
     # Move NPC
     #
