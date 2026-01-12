@@ -310,13 +310,9 @@ class Player(object):
                     if (n.x == x) and (n.y == y):           # is npc at coordinates                        
                         n.stamina -= (n.stamina * attackpercent)
 
-                        print("n.stamina=",n.stamina)
-                        
                         if (n.stamina < 1):                            
                             soundpath=os.path.join(os.getcwd(),"sounds/monster_die.wav")
                             Sound.PlaySound(soundpath)                      # play sound
-
-                            print("NPC destroyed")
                             
                             n.DestroyNPC()                                                    
                             Game.npcs.remove(n)                            
@@ -397,8 +393,6 @@ class Tile(object):
         if Game.InGame == False:
             return
 
-        print("previous=",self.previousimagename)
-        
         if self.previousimagename != None:
             self.image.config(file=self.previousimagename)      # change image
             self.currentimagename=self.previousimagename
@@ -410,7 +404,8 @@ class Tile(object):
         self.attributes=attribs
         
     #
-    # Copy image
+    # Copy tile without modification
+    
     #
     
     def copy_image(image,xsize,ysize,newimage):
@@ -432,15 +427,14 @@ class Tile(object):
                     newimage.put(pix,(x,y)) # put pixel                    
 
     #
-    # Flip image on the X axis
+    # Flip tile on the X axis
     #
     def flip_image_x(image,xsize,ysize,newimage):
         newcount=0
 
         y=0;
     
-        while y < ysize:                    # for each column
-        
+        while y < ysize:                    # for each column    
         #
         # copy each row in reverse to the new image
         # across the x-axis
@@ -467,9 +461,9 @@ class Tile(object):
                 y += 1
 
     #
-    # Flip image on Y axis
+    # Flip tile on Y axis
     #
-    # Copies image pixels in columns in reverse
+    # Copies tile pixels in columns in reverse
     #
     def flip_image_y(image,xsize,ysize,newimage):
         newcount=0
@@ -480,12 +474,8 @@ class Tile(object):
             ycount=ysize-1          # zero-based
             newcount=0         # Start at Y=0
 
-            while ycount > 0:
-#                print(x,y)
-                
+            while ycount > 0:                
                 pixel=image.get(x,ycount)       # read pixel from source
-
-                #print(x,ycount)
 
                 # get pixel into string and pad
                 
@@ -506,7 +496,7 @@ class Tile(object):
             x += 1
 
 #
-# Rotate image anticlockwise 90 degrees
+# Rotate tile anticlockwise 90 degrees
 #
 # Copy rows into columns forwards
 
@@ -525,8 +515,6 @@ class Tile(object):
                                
                 pixel=image.get(x,y)                # get pixel
         
-                #print(x,y,outx,outy)
-
                # format and pad pixel into string
                
                 formatted_pixel="%x%x%x" % pixel                   
@@ -569,8 +557,6 @@ class Tile(object):
                                    
                 pixel=image.get(x,y)                        # get pixel
         
-                #print(x,y,outx,outy)
-
                 # format and pad pixel into string
                 
                 formatted_pixel="%x%x%x" % pixel                   
@@ -799,8 +785,6 @@ class Game(object):
                 for tile in tile_line:
                    
                    if tile == Game.blockimages[targetxy].currentimagename:
-
-                      #print("found=",tile)
                       object_type_list[Game.BLK_FUNCTION]()                 # call function
 
         # remove object from world
@@ -808,8 +792,6 @@ class Game(object):
         for object_type_list in Game.item_tiles:           
             if object_type_list[Game.BLK_FILENAME] == Game.blockimages[targetxy].currentimagename:         # if block matches
 
-              print("found item")
-            
               object_type_list[Game.BLK_FUNCTION]()                 # call function
 
               if (object_type_list[Game.BLK_FLAGS] & Game.BLOCK_GENERATED):
@@ -1047,9 +1029,7 @@ class Game(object):
            foregroundtiles=Game.stage_tiles[Game.STAGE_FOREGROUND_TILES]   
            targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
         
-           for object_type_list in Game.item_tiles:
-                print(object_type_list[self.BLK_FILENAME],Game.blockimages[targetxy].currentimagename)
-                
+           for object_type_list in Game.item_tiles:                
                 if object_type_list[self.BLK_FILENAME] == Game.blockimages[targetxy].currentimagename:         # if tile matches
                 
                     if (object_type_list[self.BLK_FLAGS] & self.BLOCK_PICKUPABLE):       # tile can be picked up
@@ -1218,12 +1198,12 @@ class Game(object):
         
         Game.screen_real_x_size=Game.w
         Game.screen_real_y_size=Game.h
-
+	
         Player.player_x=2
         Player.player_y=2
         
         self.generateworld(Game.WORLD_ORDINARY,Player.player_x,Player.player_y)               
-                
+                  
         playertype=Player.player_types[Player.player_selected]
         tile=playertype[Player.PLAYER_ENTRY_SPRITE]
 
@@ -1800,7 +1780,6 @@ class Game(object):
                     Game.number_of_npcs=2 ** ((Game.CurrentStage)+1)
 
                     Game.npcs=[]
-
                     for n in range(0,Game.number_of_npcs):
                         npc_type=NPC.npc_types[random.randint(0,len(NPC.npc_types)-1)]
                         Game.npcs += [NPC(npc_type)]
@@ -1808,13 +1787,102 @@ class Game(object):
          # generate boss NPC
          
         if worldtype == Game.WORLD_BOSS_FIGHT:
-            npc_type=NPC.boss_npc_types[Game.CurrentStage]       
+            npc_type=NPC.boss_npc_types[Game.CurrentStage]
             Game.npcs += [NPC(npc_type)]
 
             if Midi.MusicPossible == True:
                 Midi.StartMidiPlay("midi/bossfight.mid")
 
- 
+    def DrawMultiTileSprite(self,tile_list,x,y,which_way_facing):
+     myx=x
+     myy=y
+        
+     if which_way_facing == self.FACING_NORTH:
+        
+            for x_list in tile_list:
+                savex=x
+
+                for y_list in x_list:
+    
+                    targetxy=int(myy*((Game.w/Tile.TILE_Y_SIZE)))+myx
+	
+                    self.tempimage=PhotoImage(file=y_list)                
+                    Tile.copy_image(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
+                    myx += 1
+            
+                myx=savex
+                myy += 1
+                 
+     elif self.which_way_facing == self.FACING_SOUTH:
+        ypos=0
+
+        ss=copy.deepcopy(tile_list)
+        ss.reverse()
+
+        for y_list in ss:
+            savex=myx
+            
+            for x_list in y_list:
+                targetxy=int(myy*((Game.w/Tile.TILE_Y_SIZE)))+myx
+                               
+                self.tempimage=PhotoImage(file=x_list)                
+                Tile.flip_image_y(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)                
+                myx += 1
+            
+            myx=savex 
+            myy += 1
+            ypos -= 1
+             
+     elif self.which_way_facing == self.FACING_EAST:
+       if self.no_y_flip == True:    
+        savey=myy
+
+        ss=copy.deepcopy(tile_list)
+        ss.reverse()
+        
+        for x_list in ss:
+            for y_list in x_list:
+                targetxy=int(myy*((Game.w/Tile.TILE_Y_SIZE)))+myx
+                              
+                self.tempimage=PhotoImage(file=y_list)                
+                Tile.rotate_clockwise_90degrees(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
+                myy += 1
+            
+            myy=savey
+            myx += 1           
+
+     elif self.which_way_facing == self.FACING_WEST:
+       if self.no_y_flip == True:
+        savey=myy
+   
+        for x_list in tile_list:
+            for y_list in x_list:
+                targetxy=int(myy*((Game.w/Tile.TILE_Y_SIZE)))+myx
+                              
+                self.tempimage=PhotoImage(file=y_list)                
+                Tile.rotate_anticlockwise_90degrees(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
+                myy += 1
+            
+            myy=savey
+            myx += 1
+            
+    def RestoreMultiTileSprite(self,tile_list,x,y,which_way_facing):
+        savex=self.x
+        myx=x
+        myy=y
+        
+        for y_list in tile_list:
+             
+             for x_list in y_list:                
+                targetxy=int(myy*((Game.w/Tile.TILE_Y_SIZE)))+myx
+
+                Game.blockimages[targetxy].RestoreTileImage()
+                
+                myx += 1
+
+             myx=savex
+             myy += 1
+             
 #
 # Heads-up display
 class HUD:
@@ -2040,7 +2108,7 @@ class NPC:
     NPC_NO_Y_FLIP = 8
     NPC_SHOOT_ODDS = 9
     NPC_SHOOT_DISTANCE = 10
-    NPC_SHOOT_TILE = 11
+    NPC_SHOOT_TILES = 11
     NPC_SHOOT_SOUND = 12
     NPC_X_SIZE = 13
     NPC_Y_SIZE = 14
@@ -2049,7 +2117,7 @@ class NPC:
     npc_tiles = []
     x=0
     y=0
-    wait=100
+    wait=50
     
     goblin_tiles = [[ "tiles/goblin.gif"] ]
     goblin_attack_tiles = [[ "tiles/goblin_attack.gif"] ]
@@ -2079,15 +2147,15 @@ class NPC:
 
 # boss tiles
 
-    dragon_tiles = [ ["tiles/dragon_001.gif","tiles/dragon_002.gif","tiles/dragon_003.gif","tiles/dragon_004.gif"],\
-                     ["tiles/dragon_005.gif","tiles/dragon_006.gif","tiles/dragon_007.gif","tiles/dragon_008.gif"],\
-                     ["tiles/dragon_009.gif","tiles/dragon_010.gif","tiles/dragon_011.gif","tiles/dragon_012.gif"],
-                     ["tiles/dragon_013.gif","tiles/dragon_014.gif","tiles/dragon_015.gif","tiles/dragon_016.gif"]]    
-    dragon_attack_tiles = [ ["tiles/dragon_attack_001.gif","tiles/dragon_attack_002.gif","tiles/dragon_attack_003.gif","tiles/dragon_attack_004.gif"],\
-                     ["tiles/dragon_attack_005.gif","tiles/dragon_attack_006.gif","tiles/dragon_attack_007.gif","tiles/dragon_attack_008.gif"],\
-                     ["tiles/dragon_attack_009.gif","tiles/dragon_attack_010.gif","tiles/dragon_attack_011.gif","tiles/dragon_attack_012.gif"],
-                     ["tiles/dragon_attack_013.gif","tiles/dragon_attack_014.gif","tiles/dragon_attack_015.gif","tiles/dragon_attack_016.gif"]]
-
+    sk_boss_tiles = [ [ "tiles/skeleton_boss_001.gif","tiles/skeleton_boss_002.gif","tiles/skeleton_boss_003.gif","tiles/skeleton_boss_004.gif"],
+                    [ "tiles/skeleton_boss_005.gif","tiles/skeleton_boss_006.gif","tiles/skeleton_boss_007.gif","tiles/skeleton_boss_008.gif"],
+                    [ "tiles/skeleton_boss_009.gif","tiles/skeleton_boss_010.gif","tiles/skeleton_boss_011.gif","tiles/skeleton_boss_012.gif"],
+                    [ "tiles/skeleton_boss_013.gif","tiles/skeleton_boss_014.gif","tiles/skeleton_boss_015.gif","tiles/skeleton_boss_016.gif"]]
+    sk_boss_attack_tiles = [ [ "tiles/skeleton_boss_attack_001.gif","tiles/skeleton_boss_attack_002.gif","tiles/skeleton_boss_attack_003.gif","tiles/skeleton_boss_attack_004.gif"],
+                    [ "tiles/skeleton_boss_attack_005.gif","tiles/skeleton_boss_attack_006.gif","tiles/skeleton_boss_attack_007.gif","tiles/skeleton_boss_attack_008.gif"],
+                    [ "tiles/skeleton_boss_attack_009.gif","tiles/skeleton_boss_attack_010.gif","tiles/skeleton_boss_attack_011.gif","tiles/skeleton_boss_attack_012.gif"],
+                    [ "tiles/skeleton_boss_attack_013.gif","tiles/skeleton_boss_attack_014.gif","tiles/skeleton_boss_attack_015.gif","tiles/skeleton_boss_attack_016.gif"]]
+  
     minotaur_tiles = [ [ "tiles/minotaur_001.gif","tiles/minotaur_002.gif","tiles/minotaur_003.gif","tiles/minotaur_004.gif","tiles/minotaur_005.gif","tiles/minotaur_006.gif","tiles/minotaur_007.gif"],
                     [ "tiles/minotaur_008.gif","tiles/minotaur_009.gif","tiles/minotaur_010.gif","tiles/minotaur_011.gif","tiles/minotaur_012.gif","tiles/minotaur_013","tiles/minotaur_014"],
                     [ "tiles/minotaur_015.gif","tiles/minotaur_016.gif","tiles/minotaur_017.gif","tiles/minotaur_018.gif","tiles/minotaur_019.gif","tiles/minotaur_020","tiles/minotaur_021"],
@@ -2117,7 +2185,7 @@ class NPC:
                     [ "tiles/ape_attack029.gif","tiles/ape_attack030.gif","tiles/ape_attack031.gif","tiles/ape_attack032.gif","tiles/ape_attack033.gif","tiles/ape_attack034","tiles/ape_attack035"],
                     [ "tiles/ape_attack036.gif","tiles/ape_attack037.gif","tiles/ape_attack038.gif","tiles/ape_attack039.gif","tiles/ape_attack040.gif","tiles/ape_attack041","tiles/ape_attack042"],
                     [ "tiles/ape_attack043.gif","tiles/ape_attack044.gif","tiles/ape_attack045.gif","tiles/ape_attack046.gif","tiles/ape_attack047.gif","tiles/ape_attack048","tiles/ape_attack049"]]
-                 
+
     pig_tiles = [ [ "tiles/pigmonster_001.gif","tiles/pigmonster_002.gif","tiles/pigmonster_003.gif","tiles/pigmonster_004.gif","tiles/pigmonster_005.gif","tiles/pigmonster_006.gif","tiles/pigmonster_007.gif"],
                     [ "tiles/pigmonster_008.gif","tiles/pigmonster_009.gif","tiles/pigmonster_010.gif","tiles/pigmonster_011.gif","tiles/pigmonster_012.gif","tiles/pigmonster_013","tiles/pigmonster_014"],
                     [ "tiles/pigmonster_015.gif","tiles/pigmonster_016.gif","tiles/pigmonster_017.gif","tiles/pigmonster_018.gif","tiles/pigmonster_019.gif","tiles/pigmonster_020","tiles/pigmonster_021"],
@@ -2132,7 +2200,7 @@ class NPC:
                     [ "tiles/pig_attack__029.gif","tiles/pig_attack__030.gif","tiles/pig_attack__031.gif","tiles/pig_attack__032.gif","tiles/pig_attack__033.gif","tiles/pig_attack__034","tiles/pig_attack__035"],
                     [ "tiles/pig_attack__036.gif","tiles/pig_attack__037.gif","tiles/pig_attack__038.gif","tiles/pig_attack__039.gif","tiles/pig_attack__040.gif","tiles/pig_attack__041","tiles/pig_attack__042"],
                     [ "tiles/pig_attack__043.gif","tiles/pig_attack__044.gif","tiles/pig_attack__045.gif","tiles/pig_attack__046.gif","tiles/pig_attack__047.gif","tiles/pig_attack__048","tiles/pig_attack__049"]]
-                    
+    
     wolf_tiles = [ [ "tiles/wolf_001.gif","tiles/wolf_002.gif","tiles/wolf_003.gif","tiles/wolf_004.gif"],
                     [ "tiles/wolf_005.gif","tiles/wolf_006.gif","tiles/wolf_007.gif","tiles/wolf_008.gif"],
                     [ "tiles/wolf_009.gif","tiles/wolf_010.gif","tiles/wolf_011.gif","tiles/wolf_012.gif"],
@@ -2151,15 +2219,11 @@ class NPC:
                     [ "tiles/spider_attack009.gif","tiles/spider_attack010.gif","tiles/spider_attack011.gif","tiles/spider_attack012.gif"],
                     [ "tiles/spider_attack013.gif","tiles/spider_attack014.gif","tiles/spider_attack015.gif","tiles/spider_attack016.gif"]]
 
-    skeleton_boss_tiles = [ [ "tiles/skeleton_boss001.gif","tiles/skeleton_boss002.gif","tiles/skeleton_boss003.gif","tiles/skeleton_boss004.gif"],
-                    [ "tiles/skeleton_boss005.gif","tiles/skeleton_boss006.gif","tiles/skeleton_boss007.gif","tiles/skeleton_boss008.gif"],
-                    [ "tiles/skeleton_boss009.gif","tiles/skeleton_boss010.gif","tiles/skeleton_boss011.gif","tiles/skeleton_boss012.gif"],
-                    [ "tiles/skeleton_boss013.gif","tiles/skeleton_boss014.gif","tiles/skeleton_boss015.gif","tiles/skeleton_boss016.gif"]]
-    skeleton_boss_attack_tiles = [ [ "tiles/skeleton_boss_attack001.gif","tiles/skeleton_boss_attack002.gif","tiles/skeleton_boss_attack003.gif","tiles/skeleton_boss_attack004.gif"],
-                    [ "tiles/skeleton_boss_attack005.gif","tiles/skeleton_boss_attack006.gif","tiles/skeleton_boss_attack007.gif","tiles/skeleton_boss_attack008.gif"],
-                    [ "tiles/skeleton_boss_attack009.gif","tiles/skeleton_boss_attack010.gif","tiles/skeleton_boss_attack011.gif","tiles/skeleton_boss_attack012.gif"],
-                    [ "tiles/skeleton_boss_attack013.gif","tiles/skeleton_boss_attack014.gif","tiles/skeleton_boss_attack015.gif","tiles/skeleton_boss_attack016.gif"]]
-
+    dragon_tiles = [ ["tiles/dragon1.gif","tiles/dragon2.gif","tiles/dragon3.gif","tiles/dragon4.gif"],\
+                     ["tiles/dragon5.gif","tiles/dragon6.gif","tiles/dragon7.gif","tiles/dragon8.gif"],\
+                     ["tiles/dragon9.gif","tiles/dragon10.gif","tiles/dragon11.gif","tiles/dragon12.gif"],
+                     ["tiles/dragon13.gif","tiles/dragon14.gif","tiles/dragon15.gif","tiles/dragon16.gif"]]
+ 
     darklord_tiles =[ [ "tiles/darklord_001.gif","tiles/darklord_002.gif","tiles/darklord_003.gif","tiles/darklord_004.gif","tiles/darklord_005.gif","tiles/darklord_006.gif","tiles/darklord_007.gif","tiles/darklord_008.gif"],
                      [ "tiles/darklord_009.gif","tiles/darklord_010.gif","tiles/darklord_011.gif","tiles/darklord_012.gif","tiles/darklord_013.gif","tiles/darklord_014.gif","tiles/darklord_015.gif","tiles/darklord_016.gif"],
                      ["tiles/darklord_017.gif","tiles/darklord_018.gif","tiles/darklord_018.gif","tiles/darklord_020.gif","tiles/darklord_021.gif","tiles/darklord_022.gif","tiles/darklord_023.gif","tiles/darklord_024.gif"],
@@ -2177,25 +2241,28 @@ class NPC:
                      ["tiles/darklord_attack_048.gif","tiles/darklord_attack_049.gif","tiles/darklord_attack_050.gif","tiles/darklord_attack_051.gif","tiles/darklord_attack_052.gif","tiles/darklord_attack_053.gif","tiles/darklord_attack_054.gif","tiles/darklord_attack_055.gif"],
                      ["tiles/darklord_attack_056.gif","tiles/darklord_attack_057.gif","tiles/darklord_attack_058.gif","tiles/darklord_attack_059.gif","tiles/darklord_attack_060.gif","tiles/darklord_attack_061.gif","tiles/darklord_attack_062.gif","tiles/darklord_attack_063.gif"]]
     
-                      
+    large_fireball_tiles = [[ "tiles/large_fireball1.gif","tiles/large_fireball2.gif"],\
+                 [ "tiles/large_fireball3.gif","tiles/large_fireball4.gif"]]
+    
     #           Tile Attack tile Stamina Evil MoveOdds GenOdds  Wait Damage Allow Y flip Shoot prob. Shoot dist. Shoot tile Shoot sound X size Y size
 
     npc_types = [[ goblin_tiles,goblin_attack_tiles,  1,2,2,4,0.20,1,True,0,0,"","",1,1],
                  [ ork_tiles,   ork_attack_tiles,     2,2,2,4,0.30,1,True,0,0,"","",2,2],
-                 [ ogre_tiles,  ogre_attack_tiles,    1,2,2,5,0.40,2,True,5,20,"tiles/fireball.gif","sounds/fireball.wav",2,2],
+                 [ ogre_tiles,  ogre_attack_tiles,    1,2,2,5,0.40,2,True,5,20,[["tiles/fireball.gif"]],"sounds/fireball.wav",2,2],
                  [ troll_tiles, troll_attack_tiles,   3,3,2,2,0.30,3,True,0,0,"","",1,1],
-                 [ sk_tiles,    sk_attack_tiles,      2,1,1,3,0.20,1,True,5,20,"","",1,1],
-                 [ zombie_tiles,zombie_attack_tiles,  1,1,2,3,0.20,1,True,5,20,"tiles/fireball.gif","sounds/fireball.wav",1,1],
-                 [ demon_tiles, demon_attack_tiles,   2,1,2,3,0.20,2,True,5,20,"tiles/fireball.gif","sounds/fireball.wav",1,1],
+                 [ sk_tiles,    sk_attack_tiles,      2,1,1,3,0.20,1,True,5,20,[["tiles/arrow.gif"]],"sounds/arrow_shoot.wav",1,1],
+                 [ zombie_tiles,zombie_attack_tiles,  1,1,2,3,0.20,1,True,5,20,[["tiles/fireball.gif"]],"sounds/fireball.wav",1,1],
+                 [ demon_tiles, demon_attack_tiles,   2,1,2,3,0.20,2,True,5,20,[["tiles/fireball.gif"]],"sounds/fireball.wav",1,1],
                  ]
     
-    boss_npc_types = [[ skeleton_boss_tiles,skeleton_boss_attack_tiles,20,6,3,4,0.20,5,False,0,0,"","",4,4],
-                      [ dragon_tiles,dragon_attack_tiles,    3,5,2,4,0.20,25,False,5,20,"tiles/fireball.gif","sounds/fireball.wav",4,4],
+    boss_npc_types = [[],
+                      [ sk_boss_tiles,sk_boss_attack_tiles, 20,6,3,4,0.20, 5,False,0,0,"","",4,4],
                       [ wolf_tiles, wolf_attack_tiles,       2,2,2,3,0.20,15,False,0,0,"","",4,4],
                       [ spider_tiles,spider_attack_tiles,    2,2,2,3,0.20,20,False,0,0,"","",4,4],                     
-                      [ minotaur_tiles,minotaur_attack_tiles,5,6,3,4,0.20,5,False,0,0,"","",7,7],
+                      [ minotaur_tiles,minotaur_attack_tiles,5,6,3,4,0.20, 5,False,0,0,"","",7,7],
                       [ ape_tiles,ape_attack_tiles,          5,7,4,4,0.20,10,False,0,0,"","",7,7],
                       [ pig_tiles,pig_attack_tiles,          5,8,5,4,0.20,15,False,0,0,"","",7,7],
+                      [ dragon_tiles,dragon_tiles,           3,5,2,4,0.20,25,False,5,20,large_fireball_tiles,"sounds/fireball.wav",4,4],
                       [ darklord_tiles,darklord_attack_tiles,6,10,5,4,0.10,50,False,0,0,"","",8,8],
                       ]
                       
@@ -2230,7 +2297,7 @@ class NPC:
                 break
 
         # Intialize NPC data
-        
+            
         self.npc_tiles=npc[self.NPC_TILE]
         self.attack_tiles=npc[self.NPC_ATTACK_TILE]
         self.stamina=npc[self.NPC_STAMINA]
@@ -2244,7 +2311,7 @@ class NPC:
         self.shootodds=npc[self.NPC_SHOOT_ODDS]
         self.IsShooting=False
         self.shootdistance=npc[self.NPC_SHOOT_DISTANCE]
-        self.shoot_tile=npc[self.NPC_SHOOT_TILE]
+        self.shoot_tiles=npc[self.NPC_SHOOT_TILES]
         self.shoot_sound=npc[self.NPC_SHOOT_SOUND]
         self.x_size=npc[self.NPC_X_SIZE]
         self.y_size=npc[self.NPC_Y_SIZE]
@@ -2278,9 +2345,7 @@ class NPC:
         self.tick_count=time.perf_counter()+self.move_wait
 
         # Shoot fire
-        if (random.randint(0,self.shootodds) == self.shootodds) and (self.IsShooting == False) and (self.shoot_tile != ""):
-            print("Started shooting")
-            
+        if (random.randint(0,self.shootodds) == self.shootodds) and (self.IsShooting == False) and (self.shoot_tiles != ""):
             self.IsShooting=True
             self.flamecount=0
 
@@ -2301,37 +2366,24 @@ class NPC:
             # save the x and y cooordinates to restore the tile later
             self.lastx=self.flamex
             self.lasty=self.flamey
-            
-            print("Initial last=",self.lastx,self.lasty)
-
+    
             soundpath=os.path.join(os.getcwd(),self.shoot_sound)
             Sound.PlaySound(soundpath)                      # play associated sound
             
         if self.IsShooting == True:         # is currently shooting
              # draw flames
-                  print("flame=",self.flamex,self.flamey)
-
                   # restore previously drawn tile
-                
-                  print("Restoring ",self.lastx,self.lasty)
-                      
-                  targetxy=int(self.lasty*(Game.w/Tile.TILE_Y_SIZE))+self.lastx
-                  Game.blockimages[targetxy].RestoreTileImage()
-                  #Game.blockimages[targetxy].ChangeTileImage("tiles/grass.gif")     # set  image
-
+                  Game.RestoreMultiTileSprite(self,self.shoot_tiles,self.lastx,self.lasty,self.which_way_facing)
+                  
                   # If attempting to shoot through a non-traversable tile (walls, NPCs etc)
                   # stop moving and destroy it
                   if Game.check_if_moveable(self.flamex,self.flamey) == -1:            # check if moveabke
                       self.IsShooting=FALSE
                       
-                      targetxy=int(self.lasty*(Game.w/Tile.TILE_Y_SIZE))+self.lastx
-                      Game.blockimages[targetxy].RestoreTileImage()
-                      #Game.blockimages[targetxy].ChangeTileImage("tiles/grass.gif")     # set  image  
+                      Game.RestoreMultiTileSprite(self,self.shoot_tiles,self.lastx,self.lasty,self.which_way_facing)
                       return
-            
-                  # Overlay tile with image
-                  targetxy=int(self.flamey*((Game.w/Tile.TILE_Y_SIZE)))+self.flamex 
-                  self.tempimage=PhotoImage(file=self.shoot_tile)
+
+                  Game.DrawMultiTileSprite(self,self.shoot_tiles,self.flamex,self.flamey,self.which_way_facing)                  
                   
                   self.flamecount += 1
 
@@ -2339,37 +2391,26 @@ class NPC:
                   self.lasty=self.flamey
 
                   if self.which_way_facing == self.FACING_NORTH:
-                        Tile.copy_image(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)                
-                        self.flamey -= 1    
+                        self.flamey -= self.y_size
                   elif self.which_way_facing == self.FACING_SOUTH:
-                        Tile.flip_image_y(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
-                        self.flamey += 1
-        
+                        self.flamey += self.y_size
                   elif self.which_way_facing == self.FACING_EAST:
-                        self.flamex += 1
-                        Tile.rotate_clockwise_90degrees(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
-                        
+                        self.flamex += self.x_size
                   elif self.which_way_facing == self.FACING_WEST:
-                        self.flamex -= 1
-                        Tile.rotate_anticlockwise_90degrees(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
+                        self.flamex -= self.x_size
                         
                   # Has hit player
                   
                   if (self.flamey == Player.player_y) and (Player.player_x == self.flamex):
                             Player.hit(self.attack_damage*self.evil/Player.level)
-                            
-                  print("Moving to ",self.flamex,self.flamey)
-
+                       
                   # Either at edge of screen or moved to distance
                   
                   if (self.flamex == 0) or (self.flamex == (Game.w/Tile.TILE_X_SIZE)) or \
                      (self.flamey == 1) or (self.flamey == (Game.w/Tile.TILE_Y_SIZE)) or \
                      (self.flamecount == self.shootdistance+1):        # at end
                         self.IsShooting=FALSE
-
-                        targetxy=int(self.lasty*(Game.w/Tile.TILE_Y_SIZE))+self.lastx
-                        Game.blockimages[targetxy].RestoreTileImage()
-                        #Game.blockimages[targetxy].ChangeTileImage("tiles/grass.gif")     # set  image
+                        Game.RestoreMultiTileSprite(self,self.shoot_tiles,self.lastx,self.lasty,self.which_way_facing)
 
         else:   
     
@@ -2385,11 +2426,10 @@ class NPC:
                            else:
                                self.which_way_facing=self.FACING_EAST
 
-                           if self.no_y_flip == False:
-                               if Player.player_y > self.y:
-                                 self.which_way_facing=self.FACING_NORTH
-                               else:
-                                 self.which_way_facing=self.FACING_SOUTH
+                           if Player.player_y > self.y:
+                              self.which_way_facing=self.FACING_NORTH
+                           else:
+                              self.which_way_facing=self.FACING_SOUTH
                          
                            self.DrawNPC_Sprite(True)              # draw sprite
     
@@ -2499,9 +2539,7 @@ class NPC:
                         if (((self.x+1 >= n.x) and (self.x <= (n.x+npc_x_length)))) and (((self.y >= n.y) and (self.y <= (n.y+npc_y_length)))):                     
                              return -1
                     
-                        
-        #print("Move "+ways[which_way]+"=",self.x,self.y)
-        self.restore_sprite_background()
+        Game.RestoreMultiTileSprite(self,self.npc_tiles,self.x,self.y,self.which_way_facing)
         
         if which_way == self.WHICH_WAY_NORTH:
             if self.y > 1:               
@@ -2523,122 +2561,26 @@ class NPC:
                  self.x -= 1
                  self.which_way_facing=self.FACING_WEST                
 
-        self.restore_sprite_background()
+        Game.RestoreMultiTileSprite(self,self.npc_tiles,self.x,self.y,self.which_way_facing)
         self.DrawNPC_Sprite(False)              # draw sprite     
-     
-                    
-    #
-    # Restore sprite background
-    #
-    def restore_sprite_background(self):
-        x=self.x
-        y=self.y
-        
-        savex=self.x
-        
-        for y_list in self.npc_tiles:
-             
-             for x_list in y_list:                
-                targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
-
-                Game.blockimages[targetxy].RestoreTileImage()
-                
-                x += 1
-
-             x=savex
-             
-             y += 1
              
     def DestroyNPC(self):
-        print(self)
-
         self.IsDead=TRUE
-        self.restore_sprite_background()
+        Game.RestoreMultiTileSprite(self,self.npc_tiles,self.x,self.y,self.which_way_facing)
 
         del(self)
              
 #
 # draw npc sprite
 
-    def DrawNPC_Sprite(self,IsAttacking):    
-     x=self.x
-     y=self.y
-
+    def DrawNPC_Sprite(self,IsAttacking):
      if IsAttacking == True:            # is attacking player
          sprite=self.attack_tiles
      else:	
          sprite=self.npc_tiles
-         
-     if self.which_way_facing == self.FACING_NORTH:
-        
-        for x_list in self.npc_tiles:
-            savex=x
-
-            for y_list in x_list:
-                targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
-	
-                self.tempimage=PhotoImage(file=y_list)                
-                Tile.copy_image(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
-                x += 1
-            
-            x=savex
-            y += 1
-                 
-     elif self.which_way_facing == self.FACING_SOUTH:
-        ypos=0
-
-        ss=copy.deepcopy(sprite)
-        ss.reverse()
-
-        for y_list in ss:
-            savex=x
-            
-            for x_list in y_list:
-
-                targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
-                               
-                self.tempimage=PhotoImage(file=x_list)                
-                Tile.flip_image_y(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)                
-                x += 1
-            
-            x=savex 
-            y += 1
-            ypos -= 1
-             
-     elif self.which_way_facing == self.FACING_EAST:
-       if self.no_y_flip == True:    
-        savey=y
-
-        ss=copy.deepcopy(sprite)
-        ss.reverse()
-        
-        for x_list in ss:
-            for y_list in x_list:
-                targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
-                              
-                self.tempimage=PhotoImage(file=y_list)                
-                Tile.rotate_clockwise_90degrees(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
-                y += 1
-            
-            y=savey
-            x += 1           
-
-     elif self.which_way_facing == self.FACING_WEST:
-       if self.no_y_flip == True:
-        savey=y
    
-        for x_list in sprite:
-            for y_list in x_list:
-                targetxy=int(y*((Game.w/Tile.TILE_Y_SIZE)))+x
-                              
-                self.tempimage=PhotoImage(file=y_list)                
-                Tile.rotate_anticlockwise_90degrees(self.tempimage,Tile.TILE_X_SIZE,Tile.TILE_Y_SIZE,Game.blockimages[targetxy].image)
-                y += 1
-            
-            y=savey
-            x += 1           
-
- 
+     Game.DrawMultiTileSprite(self,sprite,self.x,self.y,self.which_way_facing)       # Draw NPC sprite
+        
     def RestoreAfterAttack(self):
         self.DrawNPC_Sprite(False)              # draw sprite
 
@@ -2710,8 +2652,7 @@ class Midi:
  def PlayMidiThread():
         while True:                
                 message=next(Midi.midi_iter)            # get next midi
-                
-                print(message)
+
                 Midi.output.send(message)        
 
         
